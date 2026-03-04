@@ -2,7 +2,7 @@
 
 Förslag:
 
-**Primary resource:** Tracks (track_id, track_name, duration_ms, genre, year, total_playcount, danceability, mode, valence)
+**Primary resource:** Tracks (track_id, track_name, duration_ms, genre, year, tags, total_playcount, danceability, mode, valence)
 
 **Secondary resource 1:** Artists (artist_id, artist_name, albums)
 
