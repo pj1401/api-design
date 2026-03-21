@@ -24,6 +24,7 @@ RUN uv sync --frozen --no-dev
 # Copy the src directory and seed.py
 COPY seed/src ./src
 COPY seed/seed.py .
+COPY seed/data-subset/ ./data-subset
 
 # Set PYTHONPATH to include /app
 ENV PYTHONPATH=/app
