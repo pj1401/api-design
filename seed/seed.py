@@ -2,7 +2,8 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 
-from src.loader import create_table, seed_database
+from src.user import User
+from src.loader import create_tables, seed_admin_user, seed_database
 from src.extractor import read_csv_data, read_hdf5_data, read_playcount_data
 from src.transformer import transform, transform_playcount_data
 
@@ -21,6 +22,11 @@ CSV_PATH = os.getenv("CSV_PATH")
 HDF5_PATH = os.getenv("HDF5_PATH")
 CSV_LISTENING_HISTORY_PATH = os.getenv("CSV_LISTENING_HISTORY_PATH")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
+
+# Read secrets from files
+ADMIN_USERNAME = open("/run/secrets/admin_username", "r").read().strip()
+ADMIN_EMAIL = open("/run/secrets/admin_email", "r").read().strip()
+ADMIN_PASSWORD = open("/run/secrets/admin_password", "r").read().strip()
 
 
 def connect_to_db():
@@ -45,7 +51,8 @@ def main():
     # Connect to database
     conn = connect_to_db()
 
-    create_table(conn, SQL_TABLE)
+    create_tables(conn)
+    seed_admin_user(conn, User(ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD))
 
     # Transform
     total_playcount = transform_playcount_data(playcount_data)
@@ -53,7 +60,7 @@ def main():
         combined_data = transform(chunk, hdf5_data, total_playcount)
 
         # Seed database
-        seed_database(conn, combined_data, SQL_TABLE)
+        seed_database(conn, combined_data)
 
     conn.close()
     print("Disconnected")

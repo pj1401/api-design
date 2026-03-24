@@ -18,4 +18,24 @@ CSV_LISTENING_HISTORY_PATH=data/User Listening History.csv
 HDF5_PATH=data/msd_summary_file.h5
 ```
 
-Seed script imported from different repository: [songs-csv-to-postgres](https://github.com/pj1401/songs-csv-to-postgres)
+## Instructions
+
+```powershell
+# Copy from .example.env to .env
+cp .example.env .env
+
+# Create Secret Files
+mkdir secrets
+echo "admin" > secrets/admin_username.txt
+echo "admin@example.com" > secrets/admin_email.txt
+echo "very_secure_admin_password" > secrets/admin_password.txt
+
+# Start container
+docker-compose up
+
+# Stop container
+docker-compose down
+docker-compose down -v # Removes volumes
+```
+
+Seed script imported from different repository, for full commit history see: [songs-csv-to-postgres](https://github.com/pj1401/songs-csv-to-postgres)
