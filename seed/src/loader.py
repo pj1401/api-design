@@ -2,8 +2,11 @@
 Loader module for seeding the database.
 """
 
+import bcrypt
 from psycopg2 import sql
 import pandas as pd
+
+from .user import User
 
 
 def create_table(conn, table_name: str):
@@ -50,6 +53,14 @@ def create_table(conn, table_name: str):
             FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
             FOREIGN KEY (album_id) REFERENCES albums(album_id)
         );
+        CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            permission_level INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """).format(table=sql.Identifier(table_name))
 
     cursor.execute(query)
@@ -69,6 +80,18 @@ def seed_database(conn, data: pd.DataFrame, table_name: str):
     seed_tracks_albums(conn, data[["track_id", "album_id"]])
     seed_artists_albums(conn, data[["artist_id", "album_id"]])
 
+def seed_admin_user(conn, admin: User):
+    cursor = conn.cursor()
+    query = """
+        INSERT INTO users (username, email, password_hash, permission_level)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (username) DO NOTHING;
+    """
+    admin_password_hash = bcrypt.hashpw(admin.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    cursor.execute(query, (admin.username, admin.email, admin_password_hash, 1))
+    conn.commit()
+    cursor.close()
+    print("Seeded admin user.")
 
 def seed_artists(conn, artists_data: pd.DataFrame):
     cursor = conn.cursor()
