@@ -8,6 +8,7 @@ dependencies = [
     "psycopg2>=2.9.11",
     "python-dotenv>=1.2.2",
     "dotenv>=0.9.9",
+    "bcrypt>=5.0.0",
 ]
 
 [dependency-groups]
