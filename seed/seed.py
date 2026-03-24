@@ -3,7 +3,7 @@ import psycopg2
 from dotenv import load_dotenv
 
 from src.user import User
-from src.loader import create_table, seed_admin_user, seed_database
+from src.loader import create_tables, seed_admin_user, seed_database
 from src.extractor import read_csv_data, read_hdf5_data, read_playcount_data
 from src.transformer import transform, transform_playcount_data
 
@@ -51,7 +51,7 @@ def main():
     # Connect to database
     conn = connect_to_db()
 
-    create_table(conn, SQL_TABLE)
+    create_tables(conn)
     seed_admin_user(conn, User(ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD))
 
     # Transform
@@ -60,7 +60,7 @@ def main():
         combined_data = transform(chunk, hdf5_data, total_playcount)
 
         # Seed database
-        seed_database(conn, combined_data, SQL_TABLE)
+        seed_database(conn, combined_data)
 
     conn.close()
     print("Disconnected")
