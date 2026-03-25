@@ -17,7 +17,7 @@ För albumnamn, album_id, och artist_id: [http://millionsongdataset.com/pages/ge
 
 Small subsets of the datasets are included in `seed/data-subset/` to allow faster testing.
 
-The actual files should be placed in the `seed/data/` directory.
+The actual files should be placed in the `seed/data/` directory.  
 The CSV files can be downloaded here: [Million Song Dataset + Spotify + Last.fm](https://www.kaggle.com/datasets/undefinenull/million-song-dataset-spotify-lastfm)  
 The HDF5 file can be downloaded here: [http://millionsongdataset.com/pages/getting-dataset/, (Additional files, 7)](http://millionsongdataset.com/pages/getting-dataset/)
 
