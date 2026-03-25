@@ -25,6 +25,14 @@ def create_tracks_table(conn):
             track_id VARCHAR(50) PRIMARY KEY,
             name VARCHAR(255),
             total_playcount BIGINT DEFAULT 0,
+            spotify_id VARCHAR(255),
+            tags VARCHAR(255),
+            genre VARCHAR(255),
+            year INT,
+            duration_ms INT,
+            danceability FLOAT,
+            mode INT,
+            valence FLOAT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
@@ -121,7 +129,7 @@ def seed_database(conn, data: pd.DataFrame):
     """Seed the data into the PostgreSQL database."""
     seed_artists(conn, data[["artist_id", "artist_name"]])
     seed_albums(conn, data[["album_id", "album_name"]])
-    seed_tracks(conn, data[["track_id", "name", "total_playcount"]])
+    seed_tracks(conn, data[["track_id", "name", "total_playcount", "spotify_id", "tags", "genre", "year", "duration_ms", "danceability", "mode", "valence"]])
 
     # Seed relationships
     seed_tracks_artists(conn, data[["track_id", "artist_id"]])
@@ -177,12 +185,26 @@ def seed_tracks(conn, tracks_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_data.iterrows():
         query = """
-            INSERT INTO tracks (track_id, name, total_playcount)
-            VALUES (%s, %s, %s)
+            INSERT INTO tracks (track_id, name, total_playcount, spotify_id, tags, genre,
+            year, duration_ms, danceability, mode, valence)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (track_id) DO NOTHING;
         """
         cursor.execute(
-            query, (row["track_id"], row["name"], int(row["total_playcount"]))
+            query,
+            (
+                row["track_id"],
+                row["name"],
+                int(row["total_playcount"]),
+                row["spotify_id"],
+                row["tags"],
+                row["genre"],
+                row["year"],
+                row["duration_ms"],
+                row["danceability"],
+                row["mode"],
+                row["valence"],
+            ),
         )
     conn.commit()
     cursor.close()
