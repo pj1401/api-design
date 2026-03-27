@@ -3,18 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-POSTGRES_DB = os.getenv("POSTGRES_DB")
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
-
-config = {
-    "host": POSTGRES_HOST,
-    "database": POSTGRES_DB,
-    "user": POSTGRES_USER,
-    "password": POSTGRES_PASSWORD,
-    "port": POSTGRES_PORT,
-    "SECRET_KEY": JWT_SECRET_KEY,
-}
+DB_HOST = os.getenv("POSTGRES_DEV_HOST")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_USER = os.getenv("POSTGRES_USER")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_PORT = os.getenv("POSTGRES_PORT")
+SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
