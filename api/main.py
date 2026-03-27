@@ -1,17 +1,42 @@
-from flask import Flask
+from flask import Flask, g
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+from api.src.controllers.user_controller import UserController
+from api.src.db.connection_manager import DatabaseConnectionManager
+from api.src.repositories.user_repo import UserRepository
+from api.src.services.user_service import UserService
+from api.src.blueprints.users import users_bp
 
 load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('app.config.Config')
 
-app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+    db_config = {
+        "host": app.config['DB_HOST'],
+        "database": app.config['DB_NAME'],
+        "user": app.config['DB_USER'],
+        "password": app.config['DB_PASSWORD'],
+        "port": app.config['DB_PORT']
+    }
+    db_manager = DatabaseConnectionManager(db_config)
 
+    @app.before_request
+    def before_request():
+        g.db_manager = db_manager
+        g.user_repo = UserRepository(g.db_manager)
+        g.user_service = UserService(g.user_repo)
+        g.user_controller = UserController(g.user_service)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+    # Register blueprints
+    app.register_blueprint(users_bp, url_prefix='/api')
+
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run()
