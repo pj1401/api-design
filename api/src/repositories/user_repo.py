@@ -1,0 +1,20 @@
+from api.src.util.models.user import NewUser
+
+
+class UserRepository:
+    def __init__(self, db_manager):
+        self.db_manager = db_manager
+
+    def create_user(self, new_user: NewUser):
+        conn = self.db_manager.get_connection()
+        query = """
+            INSERT INTO users (username, email, password_hash, permission_level)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (username) DO NOTHING;
+        """
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (new_user.username, new_user.email, new_user.password_hash))
+                return cursor.fetchone()
+        finally:
+            self.db_manager.release_connection(conn)
