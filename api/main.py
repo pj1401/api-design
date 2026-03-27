@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, g
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
@@ -24,6 +24,10 @@ def create_app():
         "port": app.config['DB_PORT']
     }
     db_manager = DatabaseConnectionManager(db_config)
+
+    @app.before_request
+    def before_request():
+        g.db_manager = db_manager
 
     # Register blueprints
     register_blueprints(app)
