@@ -127,19 +127,6 @@ wheels = [
 ]
 
 [[package]]
-name = "flask-injector"
-version = "0.15.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "flask" },
-    { name = "injector" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/70/f1/c9a83644c62ef7b0dec8c10d5dc18d83bd145eb442ab778279ab847e0683/Flask-Injector-0.15.0.tar.gz", hash = "sha256:567c69da7657b96565db990bb7c87cc0acf04e383714341954902f1ef85c5875", size = 13549, upload-time = "2023-07-27T00:33:18.069Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/a0/e7964d1d1b8fb64c62988de6a20ee06573354e0a0d9653b6e659323920e9/Flask_Injector-0.15.0-py2.py3-none-any.whl", hash = "sha256:9908904ab8d8830e5160b274fd5dd73453741c9c618d3fc6deb2b08d894f4ece", size = 14078, upload-time = "2023-07-27T00:33:16.297Z" },
-]
-
-[[package]]
 name = "flask-jwt-extended"
 version = "4.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -151,15 +138,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/51/16/96b101f18cba17ecce3225ab07bc4c8f23e6befd8552dbbed87482e7c7fb/flask_jwt_extended-4.7.1.tar.gz", hash = "sha256:8085d6757505b6f3291a2638c84d207e8f0ad0de662d1f46aa2f77e658a0c976", size = 34411, upload-time = "2024-11-20T23:44:41.044Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/67/34/9a91da47b1565811ab4aa5fb134632c8d1757960bfa7d457f486947c4d75/Flask_JWT_Extended-4.7.1-py2.py3-none-any.whl", hash = "sha256:52f35bf0985354d7fb7b876e2eb0e0b141aaff865a22ff6cc33d9a18aa987978", size = 22588, upload-time = "2024-11-20T23:44:39.435Z" },
-]
-
-[[package]]
-name = "injector"
-version = "0.24.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/17/6c/de0f64b2b8d7d8cd3206bd6fb54ebb0c7c2e2fe0f2d16103756ff1bf803b/injector-0.24.0.tar.gz", hash = "sha256:e85a75d1516cff2f03170f3fd1219f56acb25c9a05e307819ae0dcde3dad3d3f", size = 55988, upload-time = "2026-01-09T12:10:41.782Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl", hash = "sha256:47294c7a7fdb811f0d1b442a1e0152bb2fc28b2ccaaba4cba44e5e125e0da2d0", size = 21504, upload-time = "2026-01-09T12:10:40.329Z" },
 ]
 
 [[package]]
@@ -297,7 +275,6 @@ dependencies = [
     { name = "bcrypt" },
     { name = "dotenv" },
     { name = "flask" },
-    { name = "flask-injector" },
     { name = "flask-jwt-extended" },
 ]
 
@@ -311,7 +288,6 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=5.0.0" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "flask", specifier = ">=3.1.3" },
-    { name = "flask-injector", specifier = ">=0.15.0" },
     { name = "flask-jwt-extended", specifier = ">=4.7.1" },
 ]
 
