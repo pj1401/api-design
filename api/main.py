@@ -12,16 +12,17 @@ load_dotenv()
 
 JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 
+
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('api.src.config.config')
+    app.config.from_object("api.src.config.config")
 
     db_config = {
         "host": app.config["DB_HOST"],
-        "database": app.config['DB_NAME'],
-        "user": app.config['DB_USER'],
-        "password": app.config['DB_PASSWORD'],
-        "port": app.config['DB_PORT']
+        "database": app.config["DB_NAME"],
+        "user": app.config["DB_USER"],
+        "password": app.config["DB_PASSWORD"],
+        "port": app.config["DB_PORT"],
     }
     db_manager = DatabaseConnectionManager(db_config)
 
@@ -34,9 +35,11 @@ def create_app():
 
     return app
 
-def register_blueprints(app):
-    app.register_blueprint(users_bp, url_prefix='/api')
 
-if __name__ == '__main__':
+def register_blueprints(app):
+    app.register_blueprint(users_bp, url_prefix="/api")
+
+
+if __name__ == "__main__":
     app = create_app()
     app.run()

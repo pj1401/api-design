@@ -7,6 +7,7 @@ class DatabaseConnectionManager:
         self.connection_pool = psycopg2.pool.SimpleConnectionPool(
             minconn=1, maxconn=10, **db_config
         )
+
     def get_connection(self):
         """Get a free connection from the pool."""
         return self.connection_pool.getconn()
