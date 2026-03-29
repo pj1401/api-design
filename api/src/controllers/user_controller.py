@@ -27,5 +27,5 @@ class UserController:
                 'status': 201
             }
             return jsonify(response), 201
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+        except Exception as err:
+            return jsonify({"error": str(err)}), 500

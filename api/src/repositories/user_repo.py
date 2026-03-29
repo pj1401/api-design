@@ -5,7 +5,7 @@ class UserRepository:
     def __init__(self, db_manager):
         self.db_manager = db_manager
 
-    def create_user(self, new_user: NewUser):
+    def create_user(self, new_user: NewUser) -> UserRow:
         conn = self.db_manager.get_connection()
         query = """
                     INSERT INTO users (username, email, password_hash)
