@@ -17,6 +17,7 @@ class UserRepository:
                 cursor.execute(
                     query, (new_user.username, new_user.email, new_user.password_hash)
                 )
+                conn.commit()
                 return cursor.fetchone()
         finally:
             self.db_manager.release_connection(conn)
