@@ -1,4 +1,4 @@
-from api.src.util.models.user import NewUser
+from api.src.util.models.user import NewUser, UserRow
 
 
 class UserRepository:
@@ -10,7 +10,7 @@ class UserRepository:
         query = """
                     INSERT INTO users (username, email, password_hash)
                     VALUES (%s, %s, %s)
-                    RETURNING user_id, username, email
+                    RETURNING user_id, username, email, permission_level
                     """
         try:
             with conn.cursor() as cursor:
@@ -18,6 +18,8 @@ class UserRepository:
                     query, (new_user.username, new_user.email, new_user.password_hash)
                 )
                 conn.commit()
-                return cursor.fetchone()
+                fetched = cursor.fetchone()
+                user = UserRow(fetched[0], fetched[1], fetched[2], fetched[3])
+                return user
         finally:
             self.db_manager.release_connection(conn)

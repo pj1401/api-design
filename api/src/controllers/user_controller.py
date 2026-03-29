@@ -20,6 +20,12 @@ class UserController:
             user = self.user_service.create_user(
                 UserArguments(username, email, password)
             )
-            return jsonify(user), 201
+            response = {
+                'id': user.user_id,
+                'username': user.username,
+                'email': user.email,
+                'status': 201
+            }
+            return jsonify(response), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 500
