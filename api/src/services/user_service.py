@@ -2,6 +2,7 @@ import bcrypt
 import psycopg2
 from psycopg2 import errors
 
+from api.src.util.errors.application_error import UniqueViolationError
 from api.src.util.models.user import NewUser, UserArguments, UserRow
 
 
@@ -18,7 +19,7 @@ class UserService:
                 NewUser(user_arguments.username, user_arguments.email, password_hash)
             )
         except psycopg2.Error as err:
-            print(err)
             if err.pgcode:
-                print(err.pgcode)
+                if err.pgcode == 23505:
+                    raise UniqueViolationError(err)
             raise err

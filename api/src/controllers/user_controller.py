@@ -1,5 +1,6 @@
 from flask import jsonify, request
 
+from api.src.util.errors.application_error import convert_to_http_error
 from api.src.util.models.user import UserArguments
 
 
@@ -28,4 +29,5 @@ class UserController:
             }
             return jsonify(response), 201
         except Exception as err:
-            return jsonify({"error": str(err)}), 500
+            http_err = convert_to_http_error(err)
+            return jsonify({"error": str(http_err)}), http_err.status | 500
