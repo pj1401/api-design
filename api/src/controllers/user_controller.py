@@ -30,4 +30,4 @@ class UserController:
             return jsonify(response), 201
         except Exception as err:
             http_err = convert_to_http_error(err)
-            return jsonify({"error": str(http_err)}), http_err.status | 500
+            return jsonify(http_err.to_dict()), http_err.status

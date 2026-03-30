@@ -23,16 +23,25 @@ class HttpError(ApplicationError):
         super().__init__(err, message)
         self.status = status
 
+    def to_dict(self):
+        return {
+            "status": self.status,
+            "message": self.message,
+        }
+
 
 def convert_to_http_error(err: BaseException) -> HttpError:
-    status = errorHttpStatusMap[type(err).__name__] if isinstance(err, BaseException) else 500
-    return HttpError(err, status, httpStatusReasonMap[status])
+    error_name = type(err).__name__
+    status = errorHttpStatusMap.get(error_name, 500)
+    message = httpStatusReasonMap.get(status)
+    return HttpError(err, status, message)
 
 
 errorHttpStatusMap = {
-    "UniqueViolation": 400,
+    "UniqueViolationError": 400,
 }
 
 httpStatusReasonMap = {
-    400: "The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error)."
+    400: "The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error).",
+    500: "The server encountered an unexpected condition that prevented it from fulfilling the request.",
 }
