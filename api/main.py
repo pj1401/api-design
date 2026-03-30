@@ -2,10 +2,7 @@ from flask import Flask, g
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
-from api.src.controllers.user_controller import UserController
 from api.src.db.connection_manager import DatabaseConnectionManager
-from api.src.repositories.user_repo import UserRepository
-from api.src.services.user_service import UserService
 from api.src.blueprints.users.routes import users_bp
 
 load_dotenv()
@@ -26,6 +23,7 @@ def create_app():
     }
     db_manager = DatabaseConnectionManager(db_config)
 
+    # Add db_manager to the application context, so it can be accessed during a request.
     @app.before_request
     def before_request():
         g.db_manager = db_manager
