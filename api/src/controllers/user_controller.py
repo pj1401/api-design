@@ -21,10 +21,10 @@ class UserController:
                 UserArguments(username, email, password)
             )
             response = {
-                'id': user.user_id,
-                'username': user.username,
-                'email': user.email,
-                'status': 201
+                "id": user.user_id,
+                "username": user.username,
+                "email": user.email,
+                "status": 201,
             }
             return jsonify(response), 201
         except Exception as err:
