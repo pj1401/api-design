@@ -1,3 +1,5 @@
+from psycopg2.extras import RealDictCursor
+
 from api.src.util.models.user import NewUser, UserRow
 
 
@@ -13,13 +15,13 @@ class UserRepository:
                     RETURNING user_id, username, email, permission_level
                     """
         try:
-            with conn.cursor() as cursor:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
                     query, (new_user.username, new_user.email, new_user.password_hash)
                 )
                 conn.commit()
                 fetched = cursor.fetchone()
-                user = UserRow(fetched[0], fetched[1], fetched[2], fetched[3])
+                user = UserRow(**fetched)
                 return user
         finally:
             self.db_manager.release_connection(conn)
