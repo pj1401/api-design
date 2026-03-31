@@ -19,7 +19,6 @@ def create_app():
     register_db_manager(app)
     register_blueprints(app)
     configure_logger(app)
-    setup_logging_hooks(app)
 
     return app
 
@@ -48,9 +47,28 @@ def register_blueprints(app):
 
 def configure_logger(app):
     """Configure loggers."""
-    handler = logging.StreamHandler(sys.stdout)
-    if not app.logger.handlers:
-        app.logger.addHandler(handler)
+    # Determine environment
+    is_debug = app.config["FLASK_DEBUG"].lower() in ("true", "1", "t")
+
+    if is_debug:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    # Remove any existing handlers
+    for handler in app.logger.handlers[:]:
+        app.logger.removeHandler(handler)
+
+    # Add a new handler for console output
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    app.logger.addHandler(console_handler)
+
+    setup_logging_hooks(app)
 
 
 if __name__ == "__main__":
