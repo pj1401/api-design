@@ -13,7 +13,14 @@ JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 def create_app():
     app = Flask(__name__)
     app.config.from_object("api.src.config.config")
+    register_db_manager(app)
+    register_blueprints(app)
 
+    return app
+
+
+def register_db_manager(app):
+    """Register a database manager."""
     db_config = {
         "host": app.config["DB_HOST"],
         "database": app.config["DB_NAME"],
@@ -28,13 +35,9 @@ def create_app():
     def before_request():
         g.db_manager = db_manager
 
-    # Register blueprints
-    register_blueprints(app)
-
-    return app
-
 
 def register_blueprints(app):
+    """Register Flask blueprints."""
     app.register_blueprint(users_bp, url_prefix="/api")
 
 
