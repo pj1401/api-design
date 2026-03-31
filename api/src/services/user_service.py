@@ -1,6 +1,5 @@
 import bcrypt
 import psycopg2
-from psycopg2 import errors
 
 from api.src.util.errors.application_error import UniqueViolationError
 from api.src.util.models.user import NewUser, UserArguments, UserRow
