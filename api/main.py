@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from api.src.db.connection_manager import DatabaseConnectionManager
 from api.src.blueprints.users.routes import users_bp
+from api.src.hooks.database import setup_database_hooks
 from api.src.hooks.logging import setup_logging_hooks
+from api.src.util.models.db_config import DbConfig
 
 load_dotenv()
 
@@ -14,6 +16,7 @@ JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 
 
 def create_app():
+    """Set up the application."""
     app = Flask(__name__)
     app.config.from_object("api.src.config.config")
     register_db_manager(app)
@@ -25,19 +28,16 @@ def create_app():
 
 def register_db_manager(app):
     """Register a database manager."""
-    db_config = {
-        "host": app.config["DB_HOST"],
-        "database": app.config["DB_NAME"],
-        "user": app.config["DB_USER"],
-        "password": app.config["DB_PASSWORD"],
-        "port": app.config["DB_PORT"],
-    }
-    db_manager = DatabaseConnectionManager(db_config)
-
-    # Add db_manager to the application context, so it can be accessed during a request.
-    @app.before_request
-    def before_request():
-        g.db_manager = db_manager
+    db_manager = DatabaseConnectionManager(
+        DbConfig(
+            app.config["DB_HOST"],
+            app.config["DB_NAME"],
+            app.config["DB_USER"],
+            app.config["DB_PASSWORD"],
+            app.config["DB_PORT"],
+        )
+    )
+    setup_database_hooks(app, db_manager)
 
 
 def register_blueprints(app):
@@ -47,7 +47,15 @@ def register_blueprints(app):
 
 def configure_logger(app):
     """Configure loggers."""
-    # Determine environment
+    set_logger_env(app)
+    formatter = get_logger_formatter()
+    remove_logger_handler(app)
+    add_logger_handler(app, formatter)
+    setup_logging_hooks(app)
+
+
+def set_logger_env(app):
+    """Determine environment and set logger level."""
     is_debug = app.config["FLASK_DEBUG"].lower() in ("true", "1", "t")
 
     if is_debug:
@@ -55,20 +63,23 @@ def configure_logger(app):
     else:
         app.logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
 
-    # Remove any existing handlers
+def get_logger_formatter():
+    """Get formatter for logger."""
+    return logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+
+def remove_logger_handler(app):
+    """Remove any existing handlers."""
     for handler in app.logger.handlers[:]:
         app.logger.removeHandler(handler)
 
-    # Add a new handler for console output
+
+def add_logger_handler(app, formatter):
+    """Add a new handler for console output."""
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     app.logger.addHandler(console_handler)
-
-    setup_logging_hooks(app)
 
 
 if __name__ == "__main__":
