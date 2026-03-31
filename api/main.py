@@ -1,9 +1,12 @@
+import logging
+import sys
 from flask import Flask, g
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from api.src.db.connection_manager import DatabaseConnectionManager
 from api.src.blueprints.users.routes import users_bp
+from api.src.hooks.logging import setup_logging_hooks
 
 load_dotenv()
 
@@ -15,6 +18,8 @@ def create_app():
     app.config.from_object("api.src.config.config")
     register_db_manager(app)
     register_blueprints(app)
+    configure_logger(app)
+    setup_logging_hooks(app)
 
     return app
 
@@ -39,6 +44,13 @@ def register_db_manager(app):
 def register_blueprints(app):
     """Register Flask blueprints."""
     app.register_blueprint(users_bp, url_prefix="/api")
+
+
+def configure_logger(app):
+    """Configure loggers."""
+    handler = logging.StreamHandler(sys.stdout)
+    if not app.logger.handlers:
+        app.logger.addHandler(handler)
 
 
 if __name__ == "__main__":
