@@ -13,10 +13,6 @@ class UserController:
         try:
             data = request.get_json()
             user_arguments = UserArguments(**data)
-        except ValidationError as err:
-            return jsonify({"error": err.errors()}), 400
-
-        try:
             user = self.user_service.create_user(user_arguments)
             response = {
                 "id": user.user_id,

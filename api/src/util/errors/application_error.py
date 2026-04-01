@@ -39,6 +39,7 @@ def convert_to_http_error(err: BaseException) -> HttpError:
 
 errorHttpStatusMap = {
     "UniqueViolation": 400,
+    "ValidationError": 400,
 }
 
 httpStatusReasonMap = {
