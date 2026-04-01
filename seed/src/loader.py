@@ -129,7 +129,24 @@ def seed_database(conn, data: pd.DataFrame):
     """Seed the data into the PostgreSQL database."""
     seed_artists(conn, data[["artist_id", "artist_name"]])
     seed_albums(conn, data[["album_id", "album_name"]])
-    seed_tracks(conn, data[["track_id", "name", "total_playcount", "spotify_id", "tags", "genre", "year", "duration_ms", "danceability", "mode", "valence"]])
+    seed_tracks(
+        conn,
+        data[
+            [
+                "track_id",
+                "name",
+                "total_playcount",
+                "spotify_id",
+                "tags",
+                "genre",
+                "year",
+                "duration_ms",
+                "danceability",
+                "mode",
+                "valence",
+            ]
+        ],
+    )
 
     # Seed relationships
     seed_tracks_artists(conn, data[["track_id", "artist_id"]])
