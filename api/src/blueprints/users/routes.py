@@ -1,5 +1,4 @@
-from flask import Blueprint, request, g
-import flask
+from flask import Blueprint, g
 from api.src.controllers.user_controller import UserController
 from api.src.repositories.user_repo import UserRepository
 from api.src.services.user_service import UserService

@@ -1,6 +1,6 @@
 import logging
 import sys
-from flask import Flask, g
+from flask import Flask
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager

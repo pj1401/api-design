@@ -1,5 +1,4 @@
 from flask import jsonify, request
-from pydantic import ValidationError
 
 from api.src.util.errors.application_error import convert_to_http_error
 from api.src.util.models.user import UserArguments

@@ -1,4 +1,3 @@
-import psycopg2
 from psycopg2 import pool
 
 from api.src.util.models.db_config import DbConfig
@@ -6,7 +5,7 @@ from api.src.util.models.db_config import DbConfig
 
 class DatabaseConnectionManager:
     def __init__(self, db_config: DbConfig):
-        self.connection_pool = psycopg2.pool.SimpleConnectionPool(
+        self.connection_pool = pool.SimpleConnectionPool(
             minconn=1, maxconn=10, **vars(db_config)
         )
 
