@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from pydantic import ValidationError
 
 from api.src.util.errors.application_error import convert_to_http_error
 from api.src.util.models.user import UserArguments
@@ -9,18 +10,14 @@ class UserController:
         self.user_service = user_service
 
     def create_user(self):
-        data = request.get_json()
-        username = data.get("username")
-        email = data.get("email")
-        password = data.get("password")
-
-        if not username or not email or not password:
-            return jsonify({"error": "Missing required fields"}), 400
+        try:
+            data = request.get_json()
+            user_arguments = UserArguments(**data)
+        except ValidationError as err:
+            return jsonify({"error": err.errors()}), 400
 
         try:
-            user = self.user_service.create_user(
-                UserArguments(username, email, password)
-            )
+            user = self.user_service.create_user(user_arguments)
             response = {
                 "id": user.user_id,
                 "username": user.username,

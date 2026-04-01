@@ -1,23 +1,21 @@
-class User:
-    def __init__(self, username: str, email: str):
-        self.username = username
-        self.email = email
+from pydantic import BaseModel, EmailStr, Field
+
+
+class User(BaseModel):
+    username: str = Field(..., min_length=3, max_length=20)
+    email: EmailStr
 
 
 class UserArguments(User):
-    def __init__(self, username: str, email: str, password: str):
-        super().__init__(username, email)
-        self.password = password
+    password: str = Field(..., min_length=8)
 
 
 class NewUser(User):
-    def __init__(self, username: str, email: str, password_hash: str):
-        super().__init__(username, email)
-        self.password_hash = password_hash
+    password_hash: str
 
 
-class UserRow(User):
-    def __init__(self, user_id: int, username: str, email: str, permission_level: int):
-        super().__init__(username, email)
-        self.user_id = user_id
-        self.permission_level = permission_level
+class UserRow(BaseModel):
+    user_id: int
+    username: str
+    email: EmailStr
+    permission_level: int

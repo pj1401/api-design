@@ -15,7 +15,11 @@ class UserService:
         ).decode("utf-8")
         try:
             return self.user_repo.create_user(
-                NewUser(user_arguments.username, user_arguments.email, password_hash)
+                NewUser(
+                    username=user_arguments.username,
+                    email=user_arguments.email,
+                    password_hash=password_hash,
+                )
             )
         except psycopg2.Error as err:
             if err.pgcode:
