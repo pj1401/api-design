@@ -1,3 +1,7 @@
+"""
+Defines user routes.
+"""
+
 from flask import Blueprint, g
 from api.src.controllers.user_controller import UserController
 from api.src.repositories.user_repo import UserRepository
@@ -20,6 +24,6 @@ def get_user(user_id):
     return g.user_controller.get_user(user_id)
 
 
-@users_bp.route("/users", methods=["POST"])
+@users_bp.route("/users/register", methods=["POST"])
 def create_user():
     return g.user_controller.create_user()

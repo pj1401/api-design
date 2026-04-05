@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from api.src.db.connection_manager import DatabaseConnectionManager
-from api.src.blueprints.users.routes import users_bp
+from api.src.blueprints.router import router_bp
 from api.src.hooks.database import setup_database_hooks
 from api.src.hooks.logging import setup_logging_hooks
 from api.src.util.models.db_config import DbConfig
@@ -42,7 +42,7 @@ def register_db_manager(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    app.register_blueprint(users_bp, url_prefix="/api")
+    app.register_blueprint(router_bp)
 
 
 def configure_logger(app):
