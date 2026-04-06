@@ -21,6 +21,6 @@ class UserRow(BaseModel):
     permission_level: int
 
 
-class Login(BaseModel):
-    username: str
-    password: str
+class UserLogin(BaseModel):
+    username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=8)

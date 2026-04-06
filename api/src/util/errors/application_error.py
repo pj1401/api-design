@@ -20,6 +20,13 @@ class UniqueViolationError(ApplicationError):
         super().__init__(err, message)
 
 
+class InvalidCredentialsError(ApplicationError):
+    def __init__(
+        self, err: BaseException, message="Credentials invalid or not provided."
+    ):
+        super().__init__(err, message)
+
+
 class HttpError(ApplicationError):
     def __init__(
         self,
@@ -47,10 +54,12 @@ def convert_to_http_error(err: BaseException) -> HttpError:
 errorHttpStatusMap = {
     "UniqueViolation": 400,
     "ValidationError": 400,
+    "InvalidCredentialsError": 401,
 }
 
 httpStatusReasonMap = {
     400: "The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error).",
+    401: "Credentials invalid or not provided.",
     500: "The server encountered an unexpected condition that prevented it from fulfilling the request.",
 }
 
