@@ -19,20 +19,20 @@ def before_request():
     g.user_controller = UserController(g.user_service)
 
 
-@users_bp.route("/users/<int:user_id>", methods=["GET"])
+@users_bp.route("/<int:user_id>", methods=["GET"])
 def get_user(user_id):
     # TODO: Make get user?
     return g.user_controller.get_user(user_id)
 
 
-@users_bp.route("/users/register", methods=["POST"])
+@users_bp.route("/register", methods=["POST"])
 def create_user():
     return g.user_controller.create_user()
 
 
-# @users_bp.route("/users/login", methods=["POST"])
-# def login_user():
-#     return g.user_controller.create_user()
+@users_bp.route("/login", methods=["POST"])
+def login_user():
+    return g.user_controller.login()
 
 
 @users_bp.errorhandler(404)

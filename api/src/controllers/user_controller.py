@@ -4,7 +4,7 @@ from api.src.util.errors.application_error import (
     convert_to_http_error,
     log_original_error,
 )
-from api.src.util.models.user import UserArguments
+from api.src.util.models.user import Login, UserArguments
 
 
 class UserController:
@@ -23,6 +23,15 @@ class UserController:
                 "status": 201,
             }
             return jsonify(response), 201
+        except Exception as err:
+            log_original_error(err)
+            http_err = convert_to_http_error(err)
+            return jsonify(http_err.to_dict()), http_err.status
+
+    def login(self):
+        try:
+            data = request.get_json()
+            login = Login(**data)
         except Exception as err:
             log_original_error(err)
             http_err = convert_to_http_error(err)

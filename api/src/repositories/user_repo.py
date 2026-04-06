@@ -1,6 +1,6 @@
 from psycopg2.extras import RealDictCursor
 
-from api.src.util.models.user import NewUser, UserRow
+from api.src.util.models.user import Login, NewUser, UserRow
 
 
 class UserRepository:
@@ -23,5 +23,16 @@ class UserRepository:
                 fetched = cursor.fetchone()
                 user = UserRow(**fetched)
                 return user
+        finally:
+            self.db_manager.release_connection(conn)
+
+    def login(self, login: Login):
+        conn = self.db_manager.get_connection()
+        query = "SELECT user_id, username, password_hash, permission_level FROM users WHERE username = %s"
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query, (login.username,))
+            user = cursor.fetchone()
+            # TODO: Check password
         finally:
             self.db_manager.release_connection(conn)
