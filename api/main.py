@@ -23,6 +23,7 @@ def create_app():
     register_db_manager(app)
     register_blueprints(app)
     register_exception_handlers(app)
+    init_jwt_manager(app)
     configure_logger(app)
 
     return app
@@ -50,6 +51,11 @@ def register_blueprints(app):
 def register_exception_handlers(app):
     """Register exception handlers."""
     setup_exception_handlers(app)
+
+
+def init_jwt_manager(app):
+    """Initialise JWT manager."""
+    jwt = JWTManager(app)
 
 
 def configure_logger(app):

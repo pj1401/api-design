@@ -18,6 +18,7 @@ class UserRow(BaseModel):
     user_id: int
     username: str
     email: EmailStr
+    password_hash: str
     permission_level: int
 
 
