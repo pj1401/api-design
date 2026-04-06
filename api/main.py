@@ -1,6 +1,7 @@
 import logging
 import sys
-from flask import Flask
+from flask import Flask, json
+from werkzeug.exceptions import HTTPException
 import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
@@ -21,6 +22,7 @@ def create_app():
     app.config.from_object("api.src.config.config")
     register_db_manager(app)
     register_blueprints(app)
+    register_error_handlers(app)
     configure_logger(app)
 
     return app
@@ -43,6 +45,21 @@ def register_db_manager(app):
 def register_blueprints(app):
     """Register Flask blueprints."""
     app.register_blueprint(router_bp)
+
+
+def register_error_handlers(app):
+    @app.errorhandler(HTTPException)
+    def handle_exception(err):
+        response = err.get_response()
+        response.data = json.dumps(
+            {
+                "code": err.code,
+                "name": err.name,
+                "description": err.description,
+            }
+        )
+        response.content_type = "application/json"
+        return response
 
 
 def configure_logger(app):
