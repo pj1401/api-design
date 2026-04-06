@@ -1,3 +1,10 @@
+"""
+Custom errors and helper functions.
+"""
+
+import logging
+
+
 class ApplicationError:
     def __init__(self, err: BaseException, message="An error occurred."):
         self.err = err
@@ -46,3 +53,7 @@ httpStatusReasonMap = {
     400: "The request cannot or will not be processed due to something that is perceived to be a client error (for example validation error).",
     500: "The server encountered an unexpected condition that prevented it from fulfilling the request.",
 }
+
+
+def log_original_error(err: BaseException):
+    logging.error(f"Error occurred: {type(err).__name__}, Original exception: {err}")
