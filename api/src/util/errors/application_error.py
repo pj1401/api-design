@@ -6,7 +6,7 @@ import logging
 
 
 class ApplicationError(Exception):
-    def __init__(self, err: BaseException | None = None, message="An error occurred."):
+    def __init__(self, err: Exception | None = None, message="An error occurred."):
         self.err = err
         self.message = message
 
@@ -14,7 +14,7 @@ class ApplicationError(Exception):
 class UniqueViolationError(ApplicationError):
     def __init__(
         self,
-        err: BaseException,
+        err: Exception,
         message="Duplicate key value violates unique constraint.",
     ):
         super().__init__(err, message)
@@ -23,7 +23,7 @@ class UniqueViolationError(ApplicationError):
 class InvalidCredentialsError(ApplicationError):
     def __init__(
         self,
-        err: BaseException | None = None,
+        err: Exception | None = None,
         message="Credentials invalid or not provided.",
     ):
         super().__init__(err, message)
@@ -32,7 +32,7 @@ class InvalidCredentialsError(ApplicationError):
 class HttpError(ApplicationError):
     def __init__(
         self,
-        err: BaseException,
+        err: Exception,
         status: int,
         message="The server encountered an unexpected condition that prevented it from fulfilling the request.",
     ):
@@ -46,7 +46,7 @@ class HttpError(ApplicationError):
         }
 
 
-def convert_to_http_error(err: BaseException) -> HttpError:
+def convert_to_http_error(err: Exception) -> HttpError:
     error_name = type(err).__name__
     status = errorHttpStatusMap.get(error_name, 500)
     message = httpStatusReasonMap.get(status)
@@ -66,5 +66,5 @@ httpStatusReasonMap = {
 }
 
 
-def log_original_error(err: BaseException):
+def log_original_error(err: Exception):
     logging.error(f"Error occurred: {type(err).__name__}, Original exception: {err}")
