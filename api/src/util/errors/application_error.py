@@ -5,8 +5,8 @@ Custom errors and helper functions.
 import logging
 
 
-class ApplicationError:
-    def __init__(self, err: BaseException, message="An error occurred."):
+class ApplicationError(Exception):
+    def __init__(self, err: BaseException | None = None, message="An error occurred."):
         self.err = err
         self.message = message
 
@@ -22,7 +22,9 @@ class UniqueViolationError(ApplicationError):
 
 class InvalidCredentialsError(ApplicationError):
     def __init__(
-        self, err: BaseException, message="Credentials invalid or not provided."
+        self,
+        err: BaseException | None = None,
+        message="Credentials invalid or not provided.",
     ):
         super().__init__(err, message)
 

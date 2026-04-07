@@ -33,10 +33,12 @@ class UserService:
     def login(self, user_login: UserLogin) -> UserRow:
         try:
             user = self.user_repo.get_user_by_username(user_login.username)
+            if user is None:
+                raise InvalidCredentialsError()
             password_matches = bcrypt.checkpw(
                 user_login.password.encode("utf-8"), user.password_hash.encode("utf-8")
             )
-            if not (password_matches) or not (user):
+            if not password_matches:
                 raise InvalidCredentialsError()
             return user
         except Exception as err:

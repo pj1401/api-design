@@ -2,7 +2,6 @@ from flask import jsonify, request
 from flask_jwt_extended import create_access_token
 
 from api.src.util.errors.application_error import (
-    InvalidCredentialsError,
     convert_to_http_error,
     log_original_error,
 )
@@ -35,8 +34,6 @@ class UserController:
             data = request.get_json()
             user_login = UserLogin(**data)
             user = self.user_service.login(user_login)
-            if not (user):
-                raise InvalidCredentialsError()
             access_token = create_access_token(
                 identity={
                     "user_id": user.user_id,
