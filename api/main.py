@@ -1,7 +1,6 @@
 import logging
 import sys
 from flask import Flask
-import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from api.src.db.connection_manager import DatabaseConnectionManager
@@ -12,8 +11,6 @@ from api.src.hooks.logging import setup_logging_hooks
 from api.src.util.models.db_config import DbConfig
 
 load_dotenv()
-
-JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 
 
 def create_app():
