@@ -1,11 +1,12 @@
 from psycopg2.extras import RealDictCursor
 
+from api.src.repositories.base_repo import BaseRepository
 from api.src.util.models.user import NewUser, UserRow
 
 
-class UserRepository:
+class UserRepository(BaseRepository):
     def __init__(self, db_manager):
-        self.db_manager = db_manager
+        super().__init__(db_manager)
 
     def create_user(self, new_user: NewUser) -> UserRow:
         conn = self.db_manager.get_connection()
