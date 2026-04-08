@@ -1,7 +1,11 @@
 from flask import jsonify, request
+from flask_jwt_extended import create_access_token
 
-from api.src.util.errors.application_error import convert_to_http_error
-from api.src.util.models.user import UserArguments
+from api.src.util.errors.application_error import (
+    convert_to_http_error,
+    log_original_error,
+)
+from api.src.util.models.user import UserLogin, UserArguments
 
 
 class UserController:
@@ -21,5 +25,28 @@ class UserController:
             }
             return jsonify(response), 201
         except Exception as err:
+            log_original_error(err)
+            http_err = convert_to_http_error(err)
+            return jsonify(http_err.to_dict()), http_err.status
+
+    def login(self):
+        try:
+            data = request.get_json()
+            user_login = UserLogin(**data)
+            user = self.user_service.login(user_login)
+            access_token = create_access_token(
+                identity={
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "permission_level": user.permission_level,
+                }
+            )
+            response = {
+                "access_token": access_token,
+                "status": 200,
+            }
+            return jsonify(response), 200
+        except Exception as err:
+            log_original_error(err)
             http_err = convert_to_http_error(err)
             return jsonify(http_err.to_dict()), http_err.status

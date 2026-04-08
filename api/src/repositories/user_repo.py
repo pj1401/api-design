@@ -25,3 +25,16 @@ class UserRepository:
                 return user
         finally:
             self.db_manager.release_connection(conn)
+
+    def get_user_by_username(self, username: str):
+        conn = self.db_manager.get_connection()
+        query = "SELECT user_id, username, email, password_hash, permission_level FROM users WHERE username = %s"
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, (username,))
+                fetched = cursor.fetchone()
+                if fetched:
+                    return UserRow(**fetched)
+                return None
+        finally:
+            self.db_manager.release_connection(conn)

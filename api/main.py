@@ -1,18 +1,16 @@
 import logging
 import sys
 from flask import Flask
-import os
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 from api.src.db.connection_manager import DatabaseConnectionManager
-from api.src.blueprints.users.routes import users_bp
+from api.src.blueprints.router import router_bp
 from api.src.hooks.database import setup_database_hooks
+from api.src.hooks.exception_handlers import setup_exception_handlers
 from api.src.hooks.logging import setup_logging_hooks
 from api.src.util.models.db_config import DbConfig
 
 load_dotenv()
-
-JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
 
 
 def create_app():
@@ -21,6 +19,8 @@ def create_app():
     app.config.from_object("api.src.config.config")
     register_db_manager(app)
     register_blueprints(app)
+    register_exception_handlers(app)
+    init_jwt_manager(app)
     configure_logger(app)
 
     return app
@@ -42,7 +42,17 @@ def register_db_manager(app):
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    app.register_blueprint(users_bp, url_prefix="/api")
+    app.register_blueprint(router_bp)
+
+
+def register_exception_handlers(app):
+    """Register exception handlers."""
+    setup_exception_handlers(app)
+
+
+def init_jwt_manager(app):
+    """Initialise JWT manager."""
+    jwt = JWTManager(app)
 
 
 def configure_logger(app):

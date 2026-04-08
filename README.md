@@ -59,3 +59,36 @@ docker-compose up db      # Start only database
 docker-compose down
 docker-compose down -v # Removes volumes
 ```
+
+## Run dev
+
+### Setup env
+
+The app uses ECDSA for JWT signing.  
+To generate the key pair:
+
+```bash
+# Generate private key
+openssl ecparam -name secp521r1 -genkey -noout -out tracks-rest-api-jwt.pem
+
+# Extract public key
+openssl ec -in tracks-rest-api-jwt.pem -pubout -out tracks-rest-api-jwt.public.pem
+```
+
+Copy the contents of the key pair files to the `.env` file.
+
+### Run
+
+```powershell
+# Change to the api directory
+cd api/
+
+# Start the database
+docker-compose up db -d
+
+# Run the app
+uv run -- flask --app main run --debug
+
+# Stop the database
+docker-compose down
+```
