@@ -4,12 +4,18 @@ The BaseRepository class.
 
 
 class BaseRepository:
-    def __init__(self, db_manager):
+    def __init__(self, db_manager, table_name: str):
         self.db_manager = db_manager
+        self.table_name = table_name
 
-    def get(self):
+    def get(self, limit: int):
+        query = """SELECT * FROM %s"""
         try:
             conn = self.db_manager.get_connection()
-            return {"track1": "Name of track"}
+            with conn.cursor() as cursor:
+                cursor.execute(query, (self.table_name,))
+                conn.commit()
+                fetched = cursor.fetchmany(limit)
+                return fetched
         except Exception as err:
             raise err

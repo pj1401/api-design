@@ -19,8 +19,8 @@ class BaseController:
         try:
             page = request.args.get("page", 1, type=int)
             limit = request.args.get("limit", 20, type=int)
-            tracks = self.service.get()
-            response = {"status": 200, "tracks": tracks}
+            fetched = self.service.get(limit)
+            response = {"status": 200, "fetched": fetched}
             return jsonify(response), 200
         except Exception as err:
             log_original_error(err)

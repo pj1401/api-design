@@ -6,7 +6,7 @@ from api.src.util.models.user import NewUser, UserRow
 
 class UserRepository(BaseRepository):
     def __init__(self, db_manager):
-        super().__init__(db_manager)
+        super().__init__(db_manager, "users")
 
     def create_user(self, new_user: NewUser) -> UserRow:
         query = """

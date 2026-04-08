@@ -9,9 +9,9 @@ class BaseService:
     def __init__(self, repository: BaseRepository):
         self.repository = repository
 
-    def get(self):
+    def get(self, limit: int):
         """Get all documents."""
         try:
-            return self.repository.get()
+            return self.repository.get(limit)
         except Exception as err:
             raise err
