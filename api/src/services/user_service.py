@@ -1,6 +1,7 @@
 import bcrypt
 import psycopg2
 
+from api.src.services.base_service import BaseService
 from api.src.util.errors.application_error import (
     InvalidCredentialsError,
     UniqueViolationError,
@@ -8,16 +9,16 @@ from api.src.util.errors.application_error import (
 from api.src.util.models.user import UserLogin, NewUser, UserArguments, UserRow
 
 
-class UserService:
+class UserService(BaseService):
     def __init__(self, user_repo):
-        self.user_repo = user_repo
+        super().__init__(user_repo)
 
     def create_user(self, user_arguments: UserArguments) -> UserRow:
         password_hash = bcrypt.hashpw(
             user_arguments.password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
         try:
-            return self.user_repo.create_user(
+            return self.repository.create_user(
                 NewUser(
                     username=user_arguments.username,
                     email=user_arguments.email,
@@ -32,7 +33,7 @@ class UserService:
 
     def login(self, user_login: UserLogin) -> UserRow:
         try:
-            user = self.user_repo.get_user_by_username(user_login.username)
+            user = self.repository.get_user_by_username(user_login.username)
             if user is None:
                 raise InvalidCredentialsError()
             password_matches = bcrypt.checkpw(

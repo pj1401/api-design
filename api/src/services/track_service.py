@@ -2,14 +2,9 @@
 The TrackService class.
 """
 
+from api.src.services.base_service import BaseService
 
-class TrackService:
+
+class TrackService(BaseService):
     def __init__(self, track_repo):
-        self.track_repo = track_repo
-
-    def get(self):
-        """Get all documents."""
-        try:
-            return self.track_repo.get()
-        except Exception as err:
-            raise err
+        super().__init__(track_repo)

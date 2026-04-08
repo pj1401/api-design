@@ -21,4 +21,4 @@ def before_request():
 
 @tracks_bp.route("/", methods=["GET"])
 def get_tracks():
-    return g.track_controller.get_tracks()
+    return g.track_controller.get()

@@ -9,13 +9,13 @@ class UserRepository(BaseRepository):
         super().__init__(db_manager)
 
     def create_user(self, new_user: NewUser) -> UserRow:
-        conn = self.db_manager.get_connection()
         query = """
                     INSERT INTO users (username, email, password_hash)
                     VALUES (%s, %s, %s)
                     RETURNING user_id, username, email, permission_level
                     """
         try:
+            conn = self.db_manager.get_connection()
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
                     query, (new_user.username, new_user.email, new_user.password_hash)
@@ -28,9 +28,9 @@ class UserRepository(BaseRepository):
             self.db_manager.release_connection(conn)
 
     def get_user_by_username(self, username: str):
-        conn = self.db_manager.get_connection()
         query = "SELECT user_id, username, email, password_hash, permission_level FROM users WHERE username = %s"
         try:
+            conn = self.db_manager.get_connection()
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(query, (username,))
                 fetched = cursor.fetchone()
