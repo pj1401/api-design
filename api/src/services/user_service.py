@@ -14,7 +14,7 @@ from api.src.util.errors.application_error import (
 from api.src.util.models.user import UserLogin, NewUser, UserArguments, UserRow
 
 
-class UserService(BaseService):
+class UserService(BaseService[UserRepository]):
     def __init__(self, user_repo: UserRepository):
         super().__init__(user_repo)
 

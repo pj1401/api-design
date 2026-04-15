@@ -1,18 +1,21 @@
 """
 The BaseController class.
+module: src/controllers/base_controller.py
 """
 
+from typing import Any, Generic, TypeVar
 from flask import jsonify, request
-
 from api.src.services.base_service import BaseService
 from api.src.util.errors.application_error import (
     convert_to_http_error,
     log_original_error,
 )
 
+TService = TypeVar("TService", bound=BaseService[Any])
 
-class BaseController:
-    def __init__(self, service: BaseService):
+
+class BaseController(Generic[TService]):
+    def __init__(self, service: TService):
         self.service = service
 
     def get(self):

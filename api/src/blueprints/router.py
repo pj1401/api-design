@@ -1,5 +1,6 @@
 """
 The main router that registers the api routes.
+module: src/blueprints/router.py
 """
 
 from flask import Blueprint, jsonify
@@ -11,6 +12,6 @@ router_bp.register_blueprint(router_v1_bp, url_prefix="/api/v1")
 
 
 @router_bp.errorhandler(404)
-def not_found(err):
+def not_found(err: Exception):
     http_err = HttpError(err, 404, "The requested resource was not found.")
     return jsonify(http_err.to_dict()), http_err.status
