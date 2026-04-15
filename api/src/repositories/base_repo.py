@@ -3,6 +3,7 @@ The BaseRepository class.
 module: src/repositories/base_repo.py
 """
 
+from psycopg2.extensions import connection
 from api.src.db.connection_manager import DatabaseConnectionManager
 
 
@@ -13,6 +14,7 @@ class BaseRepository:
 
     def get(self, limit: int):
         query = """SELECT * FROM %s"""
+        conn: connection | None = None
         try:
             conn = self.db_manager.get_connection()
             with conn.cursor() as cursor:
@@ -22,3 +24,6 @@ class BaseRepository:
                 return fetched
         except Exception as err:
             raise err
+        finally:
+            if conn is not None:
+                self.db_manager.release_connection(conn)

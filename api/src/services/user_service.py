@@ -1,6 +1,11 @@
+"""
+The UserService class.
+module: src/services/user_service.py
+"""
+
 import bcrypt
 import psycopg2
-
+from api.src.repositories.user_repo import UserRepository
 from api.src.services.base_service import BaseService
 from api.src.util.errors.application_error import (
     InvalidCredentialsError,
@@ -10,7 +15,7 @@ from api.src.util.models.user import UserLogin, NewUser, UserArguments, UserRow
 
 
 class UserService(BaseService):
-    def __init__(self, user_repo):
+    def __init__(self, user_repo: UserRepository):
         super().__init__(user_repo)
 
     def create_user(self, user_arguments: UserArguments) -> UserRow:
@@ -27,7 +32,7 @@ class UserService(BaseService):
             )
         except psycopg2.Error as err:
             if err.pgcode:
-                if err.pgcode == 23505:
+                if err.pgcode == str(23505):
                     raise UniqueViolationError(err)
             raise err
 

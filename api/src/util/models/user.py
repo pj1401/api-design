@@ -1,3 +1,8 @@
+"""
+User helper classes.
+module: src/util/models/user.py
+"""
+
 from pydantic import BaseModel, EmailStr, Field
 
 
