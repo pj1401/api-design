@@ -5,7 +5,7 @@ module: src/config/config.py
 
 import os
 from dotenv import load_dotenv
-from flask import Config
+from flask import Config, Flask
 
 load_dotenv()
 
@@ -23,10 +23,9 @@ class TypedConfig(Config):
     JWT_ALGORITHM: str
 
 
-def create_config() -> TypedConfig:
-    """Get the config object."""
-    config = TypedConfig(root_path=".")
-    config.from_mapping(
+def load_config(app: Flask) -> None:
+    """Load the config."""
+    app.config.from_mapping(
         {
             "DB_HOST": os.getenv("POSTGRES_DEV_HOST"),
             "DB_NAME": os.getenv("POSTGRES_DB"),
@@ -40,4 +39,3 @@ def create_config() -> TypedConfig:
             "JWT_ALGORITHM": "ES512",
         }
     )
-    return config

@@ -5,10 +5,11 @@ module: main.py
 
 import logging
 import sys
+from typing import cast
 from flask import Flask
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
-from api.src.config.config import create_config
+from api.src.config.config import load_config
 from api.src.db.connection_manager import DatabaseConnectionManager
 from api.src.blueprints.router import router_bp
 from api.src.hooks.database import setup_database_hooks
@@ -22,9 +23,7 @@ load_dotenv()
 def create_app() -> Flask:
     """Set up the application."""
     app = Flask(__name__)
-    config = create_config()
-    print(config)
-    app.config.from_object(config)
+    load_config(app)
     register_db_manager(app)
     register_blueprints(app)
     register_exception_handlers(app)
@@ -36,14 +35,13 @@ def create_app() -> Flask:
 
 def register_db_manager(app: Flask) -> None:
     """Register a database manager."""
-    print(app.config)
     db_manager = DatabaseConnectionManager(
         DbConfig(
-            app.config["DB_HOST"],
-            app.config["DB_NAME"],
-            app.config["DB_USER"],
-            app.config["DB_PASSWORD"],
-            app.config["DB_PORT"],
+            cast(str, app.config["DB_HOST"]),
+            cast(str, app.config["DB_NAME"]),
+            cast(str, app.config["DB_USER"]),
+            cast(str, app.config["DB_PASSWORD"]),
+            cast(int, app.config["DB_PORT"]),
         )
     )
     setup_database_hooks(app, db_manager)
@@ -75,7 +73,7 @@ def configure_logger(app: Flask) -> None:
 
 def set_logger_env(app: Flask) -> None:
     """Determine environment and set logger level."""
-    is_debug: bool = app.config["FLASK_DEBUG"].lower() in ("true", "1", "t")
+    is_debug: bool = cast(str, app.config["FLASK_DEBUG"]).lower() in ("true", "1", "t")
 
     if is_debug:
         app.logger.setLevel(logging.DEBUG)
