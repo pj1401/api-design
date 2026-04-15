@@ -1,10 +1,13 @@
 """
 The BaseRepository class.
+module: src/repositories/base_repo.py
 """
+
+from api.src.db.connection_manager import DatabaseConnectionManager
 
 
 class BaseRepository:
-    def __init__(self, db_manager, table_name: str):
+    def __init__(self, db_manager: DatabaseConnectionManager, table_name: str) -> None:
         self.db_manager = db_manager
         self.table_name = table_name
 
