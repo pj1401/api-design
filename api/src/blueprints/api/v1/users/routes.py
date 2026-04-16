@@ -1,5 +1,6 @@
 """
 Defines user routes.
+module: src/blueprints/api/v1/users/routes.py
 """
 
 from flask import Blueprint, g, jsonify
@@ -36,6 +37,6 @@ def login_user():
 
 
 @users_bp.errorhandler(404)
-def not_found(err):
+def not_found(err: Exception):
     http_err = HttpError(err, 404, "The requested resource was not found.")
     return jsonify(http_err.to_dict()), http_err.status

@@ -1,6 +1,12 @@
+"""
+The UserController class.
+module: src/controllers/user_controller.py
+"""
+
 from flask import jsonify, request
 from flask_jwt_extended import create_access_token
-
+from api.src.controllers.base_controller import BaseController
+from api.src.services.user_service import UserService
 from api.src.util.errors.application_error import (
     convert_to_http_error,
     log_original_error,
@@ -8,16 +14,16 @@ from api.src.util.errors.application_error import (
 from api.src.util.models.user import UserLogin, UserArguments
 
 
-class UserController:
-    def __init__(self, user_service):
-        self.user_service = user_service
+class UserController(BaseController[UserService]):
+    def __init__(self, user_service: UserService):
+        super().__init__(user_service, "users")
 
     def create_user(self):
         try:
             data = request.get_json()
             user_arguments = UserArguments(**data)
-            user = self.user_service.create_user(user_arguments)
-            response = {
+            user = self.service.create_user(user_arguments)
+            response: dict[str, int | str] = {
                 "id": user.user_id,
                 "username": user.username,
                 "email": user.email,
@@ -33,15 +39,15 @@ class UserController:
         try:
             data = request.get_json()
             user_login = UserLogin(**data)
-            user = self.user_service.login(user_login)
-            access_token = create_access_token(
+            user = self.service.login(user_login)
+            access_token: str = create_access_token(
                 identity={
                     "user_id": user.user_id,
                     "username": user.username,
                     "permission_level": user.permission_level,
                 }
             )
-            response = {
+            response: dict[str, int | str] = {
                 "access_token": access_token,
                 "status": 200,
             }

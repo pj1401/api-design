@@ -1,3 +1,9 @@
+"""
+The DbConfig class.
+module: src/util/models/db_config.py
+"""
+
+
 class DbConfig:
     def __init__(self, host: str, database: str, user: str, password: str, port: int):
         self.host = host

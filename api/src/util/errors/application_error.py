@@ -1,12 +1,15 @@
 """
 Custom errors and helper functions.
+module: src/util/errors/application_error.py
 """
 
 import logging
 
 
 class ApplicationError(Exception):
-    def __init__(self, err: Exception | None = None, message="An error occurred."):
+    def __init__(
+        self, err: Exception | None = None, message: str = "An error occurred."
+    ):
         self.err = err
         self.message = message
 
@@ -15,7 +18,7 @@ class UniqueViolationError(ApplicationError):
     def __init__(
         self,
         err: Exception,
-        message="Duplicate key value violates unique constraint.",
+        message: str = "Duplicate key value violates unique constraint.",
     ):
         super().__init__(err, message)
 
@@ -24,7 +27,7 @@ class InvalidCredentialsError(ApplicationError):
     def __init__(
         self,
         err: Exception | None = None,
-        message="Credentials invalid or not provided.",
+        message: str = "Credentials invalid or not provided.",
     ):
         super().__init__(err, message)
 
@@ -34,12 +37,12 @@ class HttpError(ApplicationError):
         self,
         err: Exception,
         status: int,
-        message="The server encountered an unexpected condition that prevented it from fulfilling the request.",
+        message: str = "The server encountered an unexpected condition that prevented it from fulfilling the request.",
     ):
         super().__init__(err, message)
         self.status = status
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, int | str]:
         return {
             "status": self.status,
             "message": self.message,
@@ -49,7 +52,10 @@ class HttpError(ApplicationError):
 def convert_to_http_error(err: Exception) -> HttpError:
     error_name = type(err).__name__
     status = errorHttpStatusMap.get(error_name, 500)
-    message = httpStatusReasonMap.get(status)
+    message = httpStatusReasonMap.get(
+        status,
+        "The server encountered an unexpected condition that prevented it from fulfilling the request.",
+    )
     return HttpError(err, status, message)
 
 

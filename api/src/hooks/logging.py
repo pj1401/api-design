@@ -1,17 +1,22 @@
-from flask import request
+"""
+Set up logging hooks.
+module: src/hooks/logging.py
+"""
+
+from flask import Flask, request, Response
 
 
-def setup_logging_hooks(app):
+def setup_logging_hooks(app: Flask) -> None:
     """Set up request and response logging hooks."""
 
     @app.before_request
-    def log_request_info():
+    def log_request_info() -> None:  # type: ignore[unused-ignore]
         app.logger.info(
             "Request: %s %s %s", request.method, request.path, request.remote_addr
         )
 
     @app.after_request
-    def log_response_info(response):
+    def log_response_info(response: Response) -> Response:  # type: ignore[unused-ignore]
         app.logger.info(
             "Response: %s %s %s", response.status_code, request.method, request.path
         )
