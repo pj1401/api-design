@@ -1,3 +1,8 @@
+"""
+The starting point of the seed script.
+module: seed.py
+"""
+
 import os
 import psycopg2
 from dotenv import load_dotenv
@@ -21,12 +26,18 @@ SQL_TABLE = os.getenv("SQL_TABLE")
 CSV_PATH = os.getenv("CSV_PATH")
 HDF5_PATH = os.getenv("HDF5_PATH")
 CSV_LISTENING_HISTORY_PATH = os.getenv("CSV_LISTENING_HISTORY_PATH")
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 5000))
+
+admin_username = str(os.getenv("ADMIN_USERNAME"))
+admin_email = str(os.getenv("ADMIN_EMAIL"))
+admin_password = str(os.getenv("ADMIN_PASSWORD"))
 
 # Read secrets from files
-ADMIN_USERNAME = open("/run/secrets/admin_username", "r").read().strip()
-ADMIN_EMAIL = open("/run/secrets/admin_email", "r").read().strip()
-ADMIN_PASSWORD = open("/run/secrets/admin_password", "r").read().strip()
+ENVIRONMENT = str(os.getenv("ENVIRONMENT", "production"))
+if ENVIRONMENT == "production":
+    admin_username = open("/run/secrets/admin_username", "r").read().strip()
+    admin_email = open("/run/secrets/admin_email", "r").read().strip()
+    admin_password = open("/run/secrets/admin_password", "r").read().strip()
 
 
 def connect_to_db():
@@ -52,7 +63,7 @@ def main():
     conn = connect_to_db()
 
     create_tables(conn)
-    seed_admin_user(conn, User(ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD))
+    seed_admin_user(conn, User(admin_username, admin_email, admin_password))
 
     # Transform
     total_playcount = transform_playcount_data(playcount_data)

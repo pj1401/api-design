@@ -1,15 +1,16 @@
 """
 Loader module for seeding the database.
+module: src/loader.py
 """
 
 import bcrypt
 from psycopg2 import sql
 import pandas as pd
-
+from psycopg2.extensions import connection
 from .user import User
 
 
-def create_tables(conn):
+def create_tables(conn: connection):
     create_tracks_table(conn)
     create_artists_table(conn)
     create_tracks_artists_table(conn)
@@ -19,10 +20,10 @@ def create_tables(conn):
     create_users_table(conn)
 
 
-def create_tracks_table(conn):
+def create_tracks_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS tracks (
-            track_id VARCHAR(50) PRIMARY KEY,
+            track_id SERIAL PRIMARY KEY,
             name VARCHAR(255),
             total_playcount BIGINT DEFAULT 0,
             spotify_id VARCHAR(255),
@@ -39,10 +40,10 @@ def create_tracks_table(conn):
     create_table(conn, query, "tracks")
 
 
-def create_artists_table(conn):
+def create_artists_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS artists (
-            artist_id VARCHAR(50) PRIMARY KEY,
+            artist_id SERIAL PRIMARY KEY,
             artist_name VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -50,7 +51,7 @@ def create_artists_table(conn):
     create_table(conn, query, "artists")
 
 
-def create_tracks_artists_table(conn):
+def create_tracks_artists_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS tracks_artists (
             track_id VARCHAR(50),
@@ -64,10 +65,10 @@ def create_tracks_artists_table(conn):
     create_table(conn, query, "tracks_artists")
 
 
-def create_albums_table(conn):
+def create_albums_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS albums (
-            album_id VARCHAR(50) PRIMARY KEY,
+            album_id SERIAL PRIMARY KEY,
             album_name VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -75,7 +76,7 @@ def create_albums_table(conn):
     create_table(conn, query, "albums")
 
 
-def create_tracks_albums_table(conn):
+def create_tracks_albums_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS tracks_albums (
             track_id VARCHAR(50),
@@ -89,7 +90,7 @@ def create_tracks_albums_table(conn):
     create_table(conn, query, "tracks_albums")
 
 
-def create_artists_albums_table(conn):
+def create_artists_albums_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS artists_albums (
             artist_id VARCHAR(50),
@@ -103,7 +104,7 @@ def create_artists_albums_table(conn):
     create_table(conn, query, "artists_albums")
 
 
-def create_users_table(conn):
+def create_users_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
@@ -117,7 +118,7 @@ def create_users_table(conn):
     create_table(conn, query, "albums")
 
 
-def create_table(conn, query: sql.SQL, table_name: str):
+def create_table(conn: connection, query: sql.SQL, table_name: str):
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
@@ -125,15 +126,14 @@ def create_table(conn, query: sql.SQL, table_name: str):
     print(f"Created table: '{table_name}'")
 
 
-def seed_database(conn, data: pd.DataFrame):
+def seed_database(conn: connection, data: pd.DataFrame):
     """Seed the data into the PostgreSQL database."""
-    seed_artists(conn, data[["artist_id", "artist_name"]])
-    seed_albums(conn, data[["album_id", "album_name"]])
+    seed_artists(conn, data[["artist_name"]])
+    seed_albums(conn, data[["album_name"]])
     seed_tracks(
         conn,
         data[
             [
-                "track_id",
                 "name",
                 "total_playcount",
                 "spotify_id",
@@ -154,7 +154,7 @@ def seed_database(conn, data: pd.DataFrame):
     seed_artists_albums(conn, data[["artist_id", "album_id"]])
 
 
-def seed_admin_user(conn, admin: User):
+def seed_admin_user(conn: connection, admin: User):
     cursor = conn.cursor()
     query = """
         INSERT INTO users (username, email, password_hash, permission_level)
@@ -170,7 +170,7 @@ def seed_admin_user(conn, admin: User):
     print("Seeded admin user.")
 
 
-def seed_artists(conn, artists_data: pd.DataFrame):
+def seed_artists(conn: connection, artists_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in artists_data.drop_duplicates(subset=["artist_id"]).iterrows():
         query = """
@@ -184,7 +184,7 @@ def seed_artists(conn, artists_data: pd.DataFrame):
     print(f"Seeded {len(artists_data.drop_duplicates(subset=['artist_id']))} artists.")
 
 
-def seed_albums(conn, albums_data: pd.DataFrame):
+def seed_albums(conn: connection, albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in albums_data.drop_duplicates(subset=["album_id"]).iterrows():
         query = """
@@ -198,7 +198,7 @@ def seed_albums(conn, albums_data: pd.DataFrame):
     print(f"Seeded {len(albums_data.drop_duplicates(subset=['album_id']))} albums.")
 
 
-def seed_tracks(conn, tracks_data: pd.DataFrame):
+def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_data.iterrows():
         query = """
@@ -228,7 +228,7 @@ def seed_tracks(conn, tracks_data: pd.DataFrame):
     print(f"Seeded {len(tracks_data)} tracks.")
 
 
-def seed_tracks_artists(conn, tracks_artists_data: pd.DataFrame):
+def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_artists_data.iterrows():
         query = """
@@ -242,7 +242,7 @@ def seed_tracks_artists(conn, tracks_artists_data: pd.DataFrame):
     print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
 
 
-def seed_tracks_albums(conn, tracks_albums_data: pd.DataFrame):
+def seed_tracks_albums(conn: connection, tracks_albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_albums_data.iterrows():
         query = """
@@ -256,7 +256,7 @@ def seed_tracks_albums(conn, tracks_albums_data: pd.DataFrame):
     print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
 
 
-def seed_artists_albums(conn, artists_albums_data: pd.DataFrame):
+def seed_artists_albums(conn: connection, artists_albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in artists_albums_data.iterrows():
         query = """
