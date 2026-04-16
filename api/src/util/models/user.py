@@ -4,6 +4,7 @@ module: src/util/models/user.py
 """
 
 from pydantic import BaseModel, EmailStr, Field
+from api.src.util.models.base_db_model import BaseDbModel
 
 
 class User(BaseModel):
@@ -19,7 +20,8 @@ class NewUser(User):
     password_hash: str
 
 
-class UserRow(BaseModel):
+class UserModel(BaseDbModel):
+    __tablename__: str = "users"
     user_id: int
     username: str
     email: EmailStr

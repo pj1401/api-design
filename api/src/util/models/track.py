@@ -4,8 +4,7 @@ module: src/util/models/track.py
 """
 
 from enum import IntEnum
-
-from pydantic import BaseModel
+from api.src.util.models.base_db_model import BaseDbModel
 
 
 class ModeEnum(IntEnum):
@@ -13,7 +12,8 @@ class ModeEnum(IntEnum):
     major = 1
 
 
-class TrackModel(BaseModel):
+class TrackModel(BaseDbModel):
+    __tablename__: str = "tracks"
     track_id: str
     name: str
     duration_ms: int

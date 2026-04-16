@@ -7,14 +7,14 @@ from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor
 from api.src.db.connection_manager import DatabaseConnectionManager
 from api.src.repositories.base_repo import BaseRepository
-from api.src.util.models.user import NewUser, UserRow
+from api.src.util.models.user import NewUser, UserModel
 
 
-class UserRepository(BaseRepository[UserRow]):
+class UserRepository(BaseRepository[UserModel]):
     def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, UserRow, "users")
+        super().__init__(db_manager, UserModel)
 
-    def create_user(self, new_user: NewUser) -> UserRow:
+    def create_user(self, new_user: NewUser) -> UserModel:
         query = """
                     INSERT INTO users (username, email, password_hash)
                     VALUES (%s, %s, %s)
@@ -29,13 +29,13 @@ class UserRepository(BaseRepository[UserRow]):
                 )
                 conn.commit()
                 fetched = cursor.fetchone()
-                user = UserRow(**fetched)
+                user = UserModel(**fetched)
                 return user
         finally:
             if conn is not None:
                 self.db_manager.release_connection(conn)
 
-    def get_user_by_username(self, username: str) -> UserRow | None:
+    def get_user_by_username(self, username: str) -> UserModel | None:
         query = "SELECT user_id, username, email, password_hash, permission_level FROM users WHERE username = %s"
         conn: connection | None = None
         try:
@@ -44,7 +44,7 @@ class UserRepository(BaseRepository[UserRow]):
                 cursor.execute(query, (username,))
                 fetched = cursor.fetchone()
                 if fetched:
-                    return UserRow(**fetched)
+                    return UserModel(**fetched)
                 return None
         finally:
             if conn is not None:

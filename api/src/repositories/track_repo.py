@@ -10,4 +10,4 @@ from api.src.util.models.track import TrackModel
 
 class TrackRepository(BaseRepository[TrackModel]):
     def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, TrackModel, "tracks")
+        super().__init__(db_manager, TrackModel)

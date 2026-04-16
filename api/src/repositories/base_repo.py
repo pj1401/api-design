@@ -4,13 +4,13 @@ module: src/repositories/base_repo.py
 """
 
 from typing import Generic, List, TypeVar
-from pydantic import BaseModel
 from psycopg2.extensions import connection
 from psycopg2.extras import RealDictCursor
 from psycopg2 import sql
 from api.src.db.connection_manager import DatabaseConnectionManager
+from api.src.util.models.base_db_model import BaseDbModel
 
-TModel = TypeVar("TModel", bound=BaseModel)
+TModel = TypeVar("TModel", bound=BaseDbModel)
 
 
 class BaseRepository(Generic[TModel]):
@@ -18,16 +18,14 @@ class BaseRepository(Generic[TModel]):
         self,
         db_manager: DatabaseConnectionManager,
         model: type[TModel],
-        table_name: str,
     ) -> None:
         self.db_manager = db_manager
         self.model = model
-        self.table_name = table_name
 
     def get(self, limit: int) -> List[TModel]:
         """Fetch a list of resources."""
         query = sql.SQL("select * from {table}").format(
-            table=sql.Identifier(self.table_name)
+            table=sql.Identifier(self.model.__tablename__)
         )
         conn: connection | None = None
         try:

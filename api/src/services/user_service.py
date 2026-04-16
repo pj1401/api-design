@@ -11,14 +11,14 @@ from api.src.util.errors.application_error import (
     InvalidCredentialsError,
     UniqueViolationError,
 )
-from api.src.util.models.user import UserLogin, NewUser, UserArguments, UserRow
+from api.src.util.models.user import UserLogin, NewUser, UserArguments, UserModel
 
 
 class UserService(BaseService[UserRepository]):
     def __init__(self, user_repo: UserRepository):
         super().__init__(user_repo)
 
-    def create_user(self, user_arguments: UserArguments) -> UserRow:
+    def create_user(self, user_arguments: UserArguments) -> UserModel:
         password_hash = bcrypt.hashpw(
             user_arguments.password.encode("utf-8"), bcrypt.gensalt()
         ).decode("utf-8")
@@ -36,7 +36,7 @@ class UserService(BaseService[UserRepository]):
                     raise UniqueViolationError(err)
             raise err
 
-    def login(self, user_login: UserLogin) -> UserRow:
+    def login(self, user_login: UserLogin) -> UserModel:
         try:
             user = self.repository.get_user_by_username(user_login.username)
             if user is None:
