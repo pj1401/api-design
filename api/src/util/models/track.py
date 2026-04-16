@@ -13,9 +13,9 @@ class ModeEnum(IntEnum):
     major = 1
 
 
-class TrackRow(BaseModel):
+class TrackModel(BaseModel):
     track_id: str
-    track_name: str
+    name: str
     duration_ms: int
     genre: str
     year: int

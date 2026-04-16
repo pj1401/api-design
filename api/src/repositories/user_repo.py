@@ -10,9 +10,9 @@ from api.src.repositories.base_repo import BaseRepository
 from api.src.util.models.user import NewUser, UserRow
 
 
-class UserRepository(BaseRepository):
+class UserRepository(BaseRepository[UserRow]):
     def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, "users")
+        super().__init__(db_manager, UserRow, "users")
 
     def create_user(self, new_user: NewUser) -> UserRow:
         query = """
