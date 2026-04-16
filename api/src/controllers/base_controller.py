@@ -23,7 +23,10 @@ class BaseController(Generic[TService]):
             page = request.args.get("page", 1, type=int)
             limit = request.args.get("limit", 20, type=int)
             fetched = self.service.get(limit)
-            response = {"status": 200, "fetched": fetched}
+            response: dict[str, int | str | list[list[str | int]]] = {
+                "status": 200,
+                "fetched": fetched,
+            }
             return jsonify(response), 200
         except Exception as err:
             log_original_error(err)
