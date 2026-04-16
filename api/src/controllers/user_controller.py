@@ -16,7 +16,7 @@ from api.src.util.models.user import UserLogin, UserArguments
 
 class UserController(BaseController[UserService]):
     def __init__(self, user_service: UserService):
-        super().__init__(user_service)
+        super().__init__(user_service, "users")
 
     def create_user(self):
         try:

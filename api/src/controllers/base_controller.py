@@ -15,8 +15,9 @@ TService = TypeVar("TService", bound=BaseService[Any])
 
 
 class BaseController(Generic[TService]):
-    def __init__(self, service: TService):
+    def __init__(self, service: TService, resource_name: str):
         self.service = service
+        self.resource_name = resource_name
 
     def get(self):
         try:
@@ -25,7 +26,7 @@ class BaseController(Generic[TService]):
             fetched = self.service.get(limit)
             response: dict[str, int | str | list[list[str | int]]] = {
                 "status": 200,
-                "fetched": fetched,
+                f"{self.resource_name}": fetched,
             }
             return jsonify(response), 200
         except Exception as err:
