@@ -34,7 +34,8 @@ def create_tracks_table(conn: connection):
             danceability FLOAT,
             mode INT,
             valence FLOAT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            old_track_id VARCHAR(50)
         );
     """)
     create_table(conn, query, "tracks")
@@ -44,8 +45,9 @@ def create_artists_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS artists (
             artist_id SERIAL PRIMARY KEY,
-            artist_name VARCHAR(255),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            artist_name VARCHAR(255) UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            old_artist_id VARCHAR(50)
         );
     """)
     create_table(conn, query, "artists")
@@ -54,8 +56,8 @@ def create_artists_table(conn: connection):
 def create_tracks_artists_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS tracks_artists (
-            track_id VARCHAR(50),
-            artist_id VARCHAR(50),
+            track_id INTEGER,
+            artist_id INTEGER,
             PRIMARY KEY (track_id, artist_id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (track_id) REFERENCES tracks(track_id),
@@ -70,7 +72,8 @@ def create_albums_table(conn: connection):
         CREATE TABLE IF NOT EXISTS albums (
             album_id SERIAL PRIMARY KEY,
             album_name VARCHAR(255),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            old_album_id VARCHAR(50)
         );
     """)
     create_table(conn, query, "albums")
@@ -79,8 +82,8 @@ def create_albums_table(conn: connection):
 def create_tracks_albums_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS tracks_albums (
-            track_id VARCHAR(50),
-            album_id VARCHAR(50),
+            track_id INTEGER,
+            album_id INTEGER,
             PRIMARY KEY (track_id, album_id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (track_id) REFERENCES tracks(track_id),
@@ -93,8 +96,8 @@ def create_tracks_albums_table(conn: connection):
 def create_artists_albums_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS artists_albums (
-            artist_id VARCHAR(50),
-            album_id VARCHAR(50),
+            artist_id INTEGER,
+            album_id INTEGER,
             PRIMARY KEY (artist_id, album_id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
@@ -128,12 +131,13 @@ def create_table(conn: connection, query: sql.SQL, table_name: str):
 
 def seed_database(conn: connection, data: pd.DataFrame):
     """Seed the data into the PostgreSQL database."""
-    seed_artists(conn, data[["artist_name"]])
-    seed_albums(conn, data[["album_name"]])
+    seed_artists(conn, data[["old_artist_id", "artist_name"]])
+    seed_albums(conn, data[["album_id", "album_name"]])
     seed_tracks(
         conn,
         data[
             [
+                "track_id",
                 "name",
                 "total_playcount",
                 "spotify_id",
@@ -149,7 +153,7 @@ def seed_database(conn: connection, data: pd.DataFrame):
     )
 
     # Seed relationships
-    seed_tracks_artists(conn, data[["track_id", "artist_id"]])
+    seed_tracks_artists(conn, data[["track_id", "old_artist_id"]])
     seed_tracks_albums(conn, data[["track_id", "album_id"]])
     seed_artists_albums(conn, data[["artist_id", "album_id"]])
 
@@ -172,27 +176,28 @@ def seed_admin_user(conn: connection, admin: User):
 
 def seed_artists(conn: connection, artists_data: pd.DataFrame):
     cursor = conn.cursor()
-    for _, row in artists_data.drop_duplicates(subset=["artist_id"]).iterrows():
+    for _, row in artists_data.drop_duplicates(subset=["old_artist_id"]).iterrows():
         query = """
-            INSERT INTO artists (artist_id, artist_name)
+            INSERT INTO artists (artist_name, old_artist_id)
             VALUES (%s, %s)
-            ON CONFLICT (artist_id) DO NOTHING;
+            ON CONFLICT (artist_name) DO UPDATE SET old_artist_id = EXCLUDED.old_artist_id;
         """
-        cursor.execute(query, (row["artist_id"], row["artist_name"]))
+        cursor.execute(query, (row["artist_name"], row["old_artist_id"]))
     conn.commit()
     cursor.close()
-    print(f"Seeded {len(artists_data.drop_duplicates(subset=['artist_id']))} artists.")
+    print(
+        f"Seeded {len(artists_data.drop_duplicates(subset=['old_artist_id']))} artists."
+    )
 
 
 def seed_albums(conn: connection, albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in albums_data.drop_duplicates(subset=["album_id"]).iterrows():
         query = """
-            INSERT INTO albums (album_id, album_name)
-            VALUES (%s, %s)
-            ON CONFLICT (album_id) DO NOTHING;
+            INSERT INTO albums (album_name)
+            VALUES (%s);
         """
-        cursor.execute(query, (row["album_id"], row["album_name"]))
+        cursor.execute(query, (row["album_name"],))
     conn.commit()
     cursor.close()
     print(f"Seeded {len(albums_data.drop_duplicates(subset=['album_id']))} albums.")
@@ -202,15 +207,13 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_data.iterrows():
         query = """
-            INSERT INTO tracks (track_id, name, total_playcount, spotify_id, tags, genre,
+            INSERT INTO tracks (name, total_playcount, spotify_id, tags, genre,
             year, duration_ms, danceability, mode, valence)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (track_id) DO NOTHING;
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(
             query,
             (
-                row["track_id"],
                 row["name"],
                 int(row["total_playcount"]),
                 row["spotify_id"],
