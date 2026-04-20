@@ -73,7 +73,7 @@ def create_albums_table(conn: connection):
             album_id SERIAL PRIMARY KEY,
             album_name VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            old_album_id VARCHAR(50)
+            old_album_id VARCHAR(50) UNIQUE
         );
     """)
     create_table(conn, query, "albums")
@@ -132,12 +132,12 @@ def create_table(conn: connection, query: sql.SQL, table_name: str):
 def seed_database(conn: connection, data: pd.DataFrame):
     """Seed the data into the PostgreSQL database."""
     seed_artists(conn, data[["old_artist_id", "artist_name"]])
-    seed_albums(conn, data[["album_id", "album_name"]])
+    seed_albums(conn, data[["old_album_id", "album_name"]])
     seed_tracks(
         conn,
         data[
             [
-                "track_id",
+                "old_track_id",
                 "name",
                 "total_playcount",
                 "spotify_id",
@@ -153,8 +153,8 @@ def seed_database(conn: connection, data: pd.DataFrame):
     )
 
     # Seed relationships
-    seed_tracks_artists(conn, data[["track_id", "old_artist_id"]])
-    seed_tracks_albums(conn, data[["track_id", "album_id"]])
+    seed_tracks_artists(conn, data[["old_track_id", "old_artist_id"]])
+    seed_tracks_albums(conn, data[["old_track_id", "album_id"]])
     seed_artists_albums(conn, data[["artist_id", "album_id"]])
 
 
@@ -192,15 +192,22 @@ def seed_artists(conn: connection, artists_data: pd.DataFrame):
 
 def seed_albums(conn: connection, albums_data: pd.DataFrame):
     cursor = conn.cursor()
-    for _, row in albums_data.drop_duplicates(subset=["album_id"]).iterrows():
+    for _, row in albums_data.drop_duplicates(subset=["old_album_id"]).iterrows():
         query = """
-            INSERT INTO albums (album_name)
-            VALUES (%s);
+            INSERT INTO albums (album_name, old_album_id)
+            VALUES (%s, %s)
+            ON CONFLICT (old_album_id) DO NOTHING;
         """
-        cursor.execute(query, (row["album_name"],))
+        cursor.execute(
+            query,
+            (
+                row["album_name"],
+                row["old_album_id"],
+            ),
+        )
     conn.commit()
     cursor.close()
-    print(f"Seeded {len(albums_data.drop_duplicates(subset=['album_id']))} albums.")
+    print(f"Seeded {len(albums_data.drop_duplicates(subset=['old_album_id']))} albums.")
 
 
 def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
@@ -208,8 +215,8 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
     for _, row in tracks_data.iterrows():
         query = """
             INSERT INTO tracks (name, total_playcount, spotify_id, tags, genre,
-            year, duration_ms, danceability, mode, valence)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            year, duration_ms, danceability, mode, valence, old_track_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(
             query,
@@ -224,6 +231,7 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
                 row["danceability"],
                 row["mode"],
                 row["valence"],
+                row["old_track_id"],
             ),
         )
     conn.commit()
@@ -234,12 +242,15 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
 def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_artists_data.iterrows():
+        track_id = get_new_id_by_old_id(conn, row["old_track_id"])
+        print(track_id)
+        # TODO: Rewrite get_new_id_by_old_id() so artist_id can also be fetched.
         query = """
             INSERT INTO tracks_artists (track_id, artist_id)
             VALUES (%s, %s)
             ON CONFLICT (track_id, artist_id) DO NOTHING;
         """
-        cursor.execute(query, (row["track_id"], row["artist_id"]))
+        cursor.execute(query, (track_id, row["artist_id"]))
     conn.commit()
     cursor.close()
     print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
@@ -271,3 +282,16 @@ def seed_artists_albums(conn: connection, artists_albums_data: pd.DataFrame):
     conn.commit()
     cursor.close()
     print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
+
+
+def get_new_id_by_old_id(conn: connection, old_track_id: str) -> int:
+    """Fetch track_id by the old id."""
+    cursor = conn.cursor()
+    query = sql.SQL("SELECT track_id FROM tracks WHERE {old_id} = %s").format(
+        old_id=sql.Identifier("old_track_id")
+    )
+    cursor.execute(query, (old_track_id,))
+    conn.commit()
+    fetched = cursor.fetchone()
+    cursor.close()
+    return fetched[0]

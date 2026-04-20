@@ -54,10 +54,11 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
 
 def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    df = df.rename(columns={"track_id": "old_track_id"})
     df = df.rename(columns={"artist": "artist_name"})
     df = df.rename(columns={"artist_id": "old_artist_id"})
     df = df.rename(columns={"release": "album_name"})
-    df = df.rename(columns={"release_7digitalid": "album_id"})
+    df = df.rename(columns={"release_7digitalid": "old_album_id"})
     df = df.rename(columns={"playcount": "total_playcount"})
     return df
 
