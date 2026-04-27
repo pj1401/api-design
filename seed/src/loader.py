@@ -28,10 +28,10 @@ class DatabaseLoader:
         query = sql.SQL("""
             CREATE TABLE IF NOT EXISTS tracks (
                 track_id SERIAL PRIMARY KEY,
-                name VARCHAR(255),
+                name VARCHAR(511),
                 total_playcount BIGINT DEFAULT 0,
                 spotify_id VARCHAR(255),
-                tags VARCHAR(255),
+                tags VARCHAR(511),
                 genre VARCHAR(255),
                 year INT,
                 duration_ms INT,
