@@ -157,9 +157,6 @@ class DatabaseLoader:
         self.seed_tracks_albums(data[["old_track_id", "album_id"]])
         self.seed_artists_albums(data[["artist_id", "album_id"]])
 
-        # Drop temporary columns.
-        self.drop_old_id_cols()
-
     def seed_admin_user(self, admin: User):
         cursor = self.conn.cursor()
         query = """

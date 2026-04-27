@@ -93,6 +93,17 @@ def transform_albums(df: pd.DataFrame) -> pd.DataFrame:
     return normalize_columns(albums_df)
 
 
+def transform_tracks(df: pd.DataFrame) -> pd.DataFrame:
+    """Generate new track_ids and drop duplicates based on old_track_id."""
+    df.copy()
+    tracks_df = pd.DataFrame(df[["old_track_id", "name"]].reset_index(drop=True))
+    tracks_df = tracks_df.drop_duplicates(subset=["old_track_id"], keep="first")
+    tracks_df["track_id"] = tracks_df.index + 1
+    tracks_df = normalize_columns(tracks_df)
+    df = df.drop(columns=["name"])
+    return df.merge(tracks_df, on="old_track_id", how="left")
+
+
 def replace_ids(
     artists_df: pd.DataFrame, albums_df: pd.DataFrame, tracks_df: pd.DataFrame
 ) -> pd.DataFrame:
@@ -119,5 +130,6 @@ def transform(
     cleaned = replace_NaN(renamed)
     artists_df = transform_artists(cleaned)
     albums_df = transform_albums(cleaned)
-    combined_df = replace_ids(artists_df, albums_df, cleaned)
+    tracks_df = transform_tracks(cleaned)
+    combined_df = replace_ids(artists_df, albums_df, tracks_df)
     return combined_df
