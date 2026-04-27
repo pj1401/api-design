@@ -46,7 +46,7 @@ def create_artists_table(conn: connection):
     query = sql.SQL("""
         CREATE TABLE IF NOT EXISTS artists (
             artist_id SERIAL PRIMARY KEY,
-            artist_name VARCHAR(255) UNIQUE,
+            artist_name VARCHAR(255) CONSTRAINT temp_constraint UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             old_artist_id VARCHAR(50)
         );
@@ -157,6 +157,8 @@ def seed_database(conn: connection, data: pd.DataFrame):
     seed_tracks_artists(conn, data[["old_track_id", "artist_name"]])
     seed_tracks_albums(conn, data[["old_track_id", "old_album_id"]])
     seed_artists_albums(conn, data[["artist_name", "old_album_id"]])
+
+    remove_artists_temp_constraint(conn)
 
 
 def seed_admin_user(conn: connection, admin: User):
@@ -309,3 +311,12 @@ def get(
     fetched = cursor.fetchone()
     cursor.close()
     return fetched
+
+
+def remove_artists_temp_constraint(conn: connection) -> None:
+    cursor = conn.cursor()
+    query = """ALTER TABLE artists DROP CONSTRAINT temp_constraint"""
+    cursor.execute(query)
+    conn.commit()
+    cursor.close()
+    print("Removed constraint unique artist_name.")
