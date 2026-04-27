@@ -74,7 +74,6 @@ def main():
 
         # Seed database
         loader.seed_database(combined_data)
-    loader.drop_old_id_cols()
 
     conn.close()
     print("Disconnected")

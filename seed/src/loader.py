@@ -3,7 +3,6 @@ Loader module for seeding the database.
 module: src/loader.py
 """
 
-from typing import Any
 import bcrypt
 from psycopg2 import sql
 import pandas as pd
@@ -38,8 +37,7 @@ class DatabaseLoader:
                 danceability FLOAT,
                 mode INT,
                 valence FLOAT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                old_track_id VARCHAR(50)
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
         self.run_query(query)
@@ -137,7 +135,7 @@ class DatabaseLoader:
         self.seed_tracks(
             data[
                 [
-                    "old_track_id",
+                    "track_id",
                     "name",
                     "total_playcount",
                     "spotify_id",
@@ -153,8 +151,8 @@ class DatabaseLoader:
         )
 
         # Seed relationships
-        self.seed_tracks_artists(data[["old_track_id", "artist_id"]])
-        self.seed_tracks_albums(data[["old_track_id", "album_id"]])
+        self.seed_tracks_artists(data[["track_id", "artist_id"]])
+        self.seed_tracks_albums(data[["track_id", "album_id"]])
         self.seed_artists_albums(data[["artist_id", "album_id"]])
 
     def seed_admin_user(self, admin: User):
@@ -210,13 +208,15 @@ class DatabaseLoader:
         cursor = self.conn.cursor()
         for _, row in tracks_data.iterrows():
             query = """
-                INSERT INTO tracks (name, total_playcount, spotify_id, tags, genre,
-                year, duration_ms, danceability, mode, valence, old_track_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                INSERT INTO tracks (track_id, name, total_playcount, spotify_id, tags, genre,
+                year, duration_ms, danceability, mode, valence)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (track_id) DO NOTHING;;
             """
             cursor.execute(
                 query,
                 (
+                    row["track_id"],
                     row["name"],
                     int(row["total_playcount"]),
                     row["spotify_id"],
@@ -227,7 +227,6 @@ class DatabaseLoader:
                     row["danceability"],
                     row["mode"],
                     row["valence"],
-                    row["old_track_id"],
                 ),
             )
         self.conn.commit()
@@ -237,15 +236,12 @@ class DatabaseLoader:
     def seed_tracks_artists(self, tracks_artists_data: pd.DataFrame):
         cursor = self.conn.cursor()
         for _, row in tracks_artists_data.iterrows():
-            track_id = self.get(
-                "track_id", "tracks", "old_track_id", row["old_track_id"]
-            )
             query = """
                 INSERT INTO tracks_artists (track_id, artist_id)
                 VALUES (%s, %s)
                 ON CONFLICT (track_id, artist_id) DO NOTHING;
             """
-            cursor.execute(query, (track_id, row["artist_id"]))
+            cursor.execute(query, (int(row["track_id"]), int(row["artist_id"])))
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
@@ -253,15 +249,12 @@ class DatabaseLoader:
     def seed_tracks_albums(self, tracks_albums_data: pd.DataFrame):
         cursor = self.conn.cursor()
         for _, row in tracks_albums_data.iterrows():
-            track_id = self.get(
-                "track_id", "tracks", "old_track_id", row["old_track_id"]
-            )
             query = """
                 INSERT INTO tracks_albums (track_id, album_id)
                 VALUES (%s, %s)
                 ON CONFLICT (track_id, album_id) DO NOTHING;
             """
-            cursor.execute(query, (track_id, row["album_id"]))
+            cursor.execute(query, (int(row["track_id"]), int(row["album_id"])))
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
@@ -274,34 +267,7 @@ class DatabaseLoader:
                 VALUES (%s, %s)
                 ON CONFLICT (artist_id, album_id) DO NOTHING;
             """
-            artist_id = int(row["artist_id"])
-            album_id = int(row["album_id"])
-            cursor.execute(query, (artist_id, album_id))
+            cursor.execute(query, (int(row["artist_id"]), int(row["album_id"])))
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
-
-    def get(
-        self, fields: str, table_name: str, col_name: str, value: str
-    ) -> tuple[Any] | None:
-        """Fetch the new id by the old id.
-        :param fields: A list of columns.
-        :param table_name: The name of the table.
-        :param col_name: The column name in the condition.
-        :param value: The value in the condition.
-        :returns: A tuple with one fetched."""
-        cursor = self.conn.cursor()
-        query = sql.SQL("SELECT {select_list} FROM {table} WHERE {column} = %s").format(
-            select_list=sql.Identifier(fields),
-            table=sql.Identifier(table_name),
-            column=sql.Identifier(col_name),
-        )
-        cursor.execute(query, (value,))
-        self.conn.commit()
-        fetched = cursor.fetchone()
-        cursor.close()
-        return fetched
-
-    def drop_old_id_cols(self) -> None:
-        self.run_query("""ALTER TABLE tracks DROP COLUMN old_track_id""")
-        print("Dropped old id columns.")
