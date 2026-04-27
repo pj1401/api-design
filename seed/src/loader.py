@@ -271,3 +271,20 @@ class DatabaseLoader:
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
+
+    def get_max_ids(self) -> dict[str, int]:
+        """Fetch the current max ids from the database."""
+        cursor = self.conn.cursor()
+        max_ids: dict[str, int] = {}
+
+        cursor.execute("SELECT MAX(artist_id) FROM artists;")
+        max_ids["artist_id"] = cursor.fetchone()[0] or 0
+
+        cursor.execute("SELECT MAX(album_id) FROM albums;")
+        max_ids["album_id"] = cursor.fetchone()[0] or 0
+
+        cursor.execute("SELECT MAX(track_id) FROM tracks;")
+        max_ids["track_id"] = cursor.fetchone()[0] or 0
+
+        cursor.close()
+        return max_ids

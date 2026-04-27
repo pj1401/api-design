@@ -63,17 +63,20 @@ def main():
     conn = connect_to_db()
 
     loader = DatabaseLoader(conn)
-
     loader.create_tables()
     loader.seed_admin_user(User(admin_username, admin_email, admin_password))
+
+    # Initialise max ids
+    max_ids = {"artist_id": 0, "album_id": 0, "track_id": 0}
 
     # Transform
     total_playcount = transform_playcount_data(playcount_data)
     for chunk in csv_data:
-        combined_data = transform(chunk, hdf5_data, total_playcount)
+        combined_data = transform(chunk, hdf5_data, total_playcount, max_ids)
 
         # Seed database
         loader.seed_database(combined_data)
+        max_ids = loader.get_max_ids()
 
     conn.close()
     print("Disconnected")

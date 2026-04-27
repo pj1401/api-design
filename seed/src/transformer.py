@@ -78,27 +78,27 @@ def replace_NaN(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def transform_artists(df: pd.DataFrame) -> pd.DataFrame:
+def transform_artists(df: pd.DataFrame, max_artist_id: int = 0) -> pd.DataFrame:
     artists_df = pd.DataFrame(
         df[["artist_name"]].drop_duplicates().reset_index(drop=True)
     )
-    artists_df["artist_id"] = artists_df.index + 1
+    artists_df["artist_id"] = artists_df.index + 1 + max_artist_id
     return normalize_columns(artists_df)
 
 
-def transform_albums(df: pd.DataFrame) -> pd.DataFrame:
+def transform_albums(df: pd.DataFrame, max_album_id: int = 0) -> pd.DataFrame:
     albums_df = pd.DataFrame(df[["album_name", "old_album_id"]].reset_index(drop=True))
     albums_df = albums_df.drop_duplicates(subset=["old_album_id"], keep="first")
-    albums_df["album_id"] = albums_df.index + 1
+    albums_df["album_id"] = albums_df.index + 1 + max_album_id
     return normalize_columns(albums_df)
 
 
-def transform_tracks(df: pd.DataFrame) -> pd.DataFrame:
+def transform_tracks(df: pd.DataFrame, max_track_id: int = 0) -> pd.DataFrame:
     """Generate new track_ids and drop duplicates based on old_track_id."""
     df.copy()
     tracks_df = pd.DataFrame(df[["old_track_id", "name"]].reset_index(drop=True))
     tracks_df = tracks_df.drop_duplicates(subset=["old_track_id"], keep="first")
-    tracks_df["track_id"] = tracks_df.index + 1
+    tracks_df["track_id"] = tracks_df.index + 1 + max_track_id
     tracks_df = normalize_columns(tracks_df)
     df = df.drop(columns=["name"])
     return df.merge(tracks_df, on="old_track_id", how="left")
@@ -123,13 +123,16 @@ def transform(
     csv_df: pd.DataFrame,
     hdf5_df: pd.DataFrame,
     total_playcount: pd.DataFrame,
+    max_ids: dict[str, int] | None = None,
 ):
+    if max_ids is None:
+        max_ids = {"artist_id": 0, "album_id": 0, "track_id": 0}
     merged = merge(csv_df, hdf5_df, total_playcount)
     normalized = normalize(merged)
     renamed = rename_columns(normalized)
     cleaned = replace_NaN(renamed)
-    artists_df = transform_artists(cleaned)
-    albums_df = transform_albums(cleaned)
-    tracks_df = transform_tracks(cleaned)
+    artists_df = transform_artists(cleaned, max_ids["artist_id"])
+    albums_df = transform_albums(cleaned, max_ids["album_id"])
+    tracks_df = transform_tracks(cleaned, max_ids["track_id"])
     combined_df = replace_ids(artists_df, albums_df, tracks_df)
     return combined_df
