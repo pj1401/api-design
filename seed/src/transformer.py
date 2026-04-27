@@ -25,6 +25,7 @@ def transform_playcount_data(playcount_data: Iterator[pd.DataFrame]) -> pd.DataF
 def merge(
     df: pd.DataFrame, hdf5_df: pd.DataFrame, total_playcount: pd.DataFrame
 ) -> pd.DataFrame:
+    """Merge csv, hdf and playcount data."""
     # Normalise track_id
     df["track_id"] = df["track_id"].astype("str").str.strip().str.upper()
     hdf5_df["track_id"] = hdf5_df["track_id"].astype("str").str.strip().str.upper()
@@ -68,7 +69,6 @@ def replace_NaN(df: pd.DataFrame) -> pd.DataFrame:
     df["total_playcount"] = df["total_playcount"].fillna(0)
     df["total_playcount"] = df["total_playcount"].astype("int64")
     return df
-
 
 def transform(
     csv_df: pd.DataFrame,

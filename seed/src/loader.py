@@ -153,9 +153,9 @@ def seed_database(conn: connection, data: pd.DataFrame):
     )
 
     # Seed relationships
-    seed_tracks_artists(conn, data[["old_track_id", "old_artist_id"]])
-    seed_tracks_albums(conn, data[["old_track_id", "album_id"]])
-    seed_artists_albums(conn, data[["artist_id", "album_id"]])
+    seed_tracks_artists(conn, data[["old_track_id", "artist_name"]])
+    seed_tracks_albums(conn, data[["old_track_id", "old_album_id"]])
+    seed_artists_albums(conn, data[["artist_name", "old_album_id"]])
 
 
 def seed_admin_user(conn: connection, admin: User):
@@ -242,15 +242,14 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
 def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_artists_data.iterrows():
-        track_id = get_new_id_by_old_id(conn, row["old_track_id"])
-        print(track_id)
-        # TODO: Rewrite get_new_id_by_old_id() so artist_id can also be fetched.
+        track_id = get_new_id(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
+        artist_id = get_new_id(conn, "artist_id", "artists", "artist_name", row["artist_name"])
         query = """
             INSERT INTO tracks_artists (track_id, artist_id)
             VALUES (%s, %s)
             ON CONFLICT (track_id, artist_id) DO NOTHING;
         """
-        cursor.execute(query, (track_id, row["artist_id"]))
+        cursor.execute(query, (track_id, artist_id))
     conn.commit()
     cursor.close()
     print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
@@ -259,12 +258,14 @@ def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
 def seed_tracks_albums(conn: connection, tracks_albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_albums_data.iterrows():
+        track_id = get_new_id(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
+        album_id = get_new_id(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
         query = """
             INSERT INTO tracks_albums (track_id, album_id)
             VALUES (%s, %s)
             ON CONFLICT (track_id, album_id) DO NOTHING;
         """
-        cursor.execute(query, (row["track_id"], row["album_id"]))
+        cursor.execute(query, (track_id, album_id))
     conn.commit()
     cursor.close()
     print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
@@ -284,13 +285,15 @@ def seed_artists_albums(conn: connection, artists_albums_data: pd.DataFrame):
     print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
 
 
-def get_new_id_by_old_id(conn: connection, old_track_id: str) -> int:
-    """Fetch track_id by the old id."""
+def get_new_id(conn: connection, id_col_name: str, table_name: str, condition_col_name: str, condition_col_value: str) -> int:
+    """Fetch the new id by the old id."""
     cursor = conn.cursor()
-    query = sql.SQL("SELECT track_id FROM tracks WHERE {old_id} = %s").format(
-        old_id=sql.Identifier("old_track_id")
+    query = sql.SQL("SELECT {id} FROM {table} WHERE {old_id} = %s").format(
+        id=sql.Identifier(id_col_name),
+        table=sql.Identifier(table_name),
+        old_id=sql.Identifier(condition_col_name)
     )
-    cursor.execute(query, (old_track_id,))
+    cursor.execute(query, (condition_col_value,))
     conn.commit()
     fetched = cursor.fetchone()
     cursor.close()
