@@ -3,6 +3,7 @@ Loader module for seeding the database.
 module: src/loader.py
 """
 
+from typing import Any
 import bcrypt
 from psycopg2 import sql
 import pandas as pd
@@ -242,8 +243,8 @@ def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
 def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_artists_data.iterrows():
-        track_id = get_new_id(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
-        artist_id = get_new_id(conn, "artist_id", "artists", "artist_name", row["artist_name"])
+        track_id = get(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
+        artist_id = get(conn, "artist_id", "artists", "artist_name", row["artist_name"])
         query = """
             INSERT INTO tracks_artists (track_id, artist_id)
             VALUES (%s, %s)
@@ -258,8 +259,8 @@ def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
 def seed_tracks_albums(conn: connection, tracks_albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in tracks_albums_data.iterrows():
-        track_id = get_new_id(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
-        album_id = get_new_id(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
+        track_id = get(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
+        album_id = get(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
         query = """
             INSERT INTO tracks_albums (track_id, album_id)
             VALUES (%s, %s)
@@ -274,27 +275,37 @@ def seed_tracks_albums(conn: connection, tracks_albums_data: pd.DataFrame):
 def seed_artists_albums(conn: connection, artists_albums_data: pd.DataFrame):
     cursor = conn.cursor()
     for _, row in artists_albums_data.iterrows():
+        artist_id = get(conn, "artist_id", "artists", "artist_name", row["artist_name"])
+        album_id = get(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
         query = """
             INSERT INTO artists_albums (artist_id, album_id)
             VALUES (%s, %s)
             ON CONFLICT (artist_id, album_id) DO NOTHING;
         """
-        cursor.execute(query, (row["artist_id"], row["album_id"]))
+        cursor.execute(query, (artist_id, album_id))
     conn.commit()
     cursor.close()
     print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
 
 
-def get_new_id(conn: connection, id_col_name: str, table_name: str, condition_col_name: str, condition_col_value: str) -> int:
-    """Fetch the new id by the old id."""
+def get(
+    conn: connection, fields: str, table_name: str, col_name: str, value: str
+) -> tuple[Any] | None:
+    """Fetch the new id by the old id.
+    :param conn: The database connection.
+    :param fields: A list of columns.
+    :param table_name: The name of the table.
+    :param col_name: The column name in the condition.
+    :param value: The value in the condition.
+    :returns: A tuple with one"""
     cursor = conn.cursor()
-    query = sql.SQL("SELECT {id} FROM {table} WHERE {old_id} = %s").format(
-        id=sql.Identifier(id_col_name),
+    query = sql.SQL("SELECT {select_list} FROM {table} WHERE {column} = %s").format(
+        select_list=sql.Identifier(fields),
         table=sql.Identifier(table_name),
-        old_id=sql.Identifier(condition_col_name)
+        column=sql.Identifier(col_name),
     )
-    cursor.execute(query, (condition_col_value,))
+    cursor.execute(query, (value,))
     conn.commit()
     fetched = cursor.fetchone()
     cursor.close()
-    return fetched[0]
+    return fetched

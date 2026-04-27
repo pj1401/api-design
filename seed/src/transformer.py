@@ -70,6 +70,7 @@ def replace_NaN(df: pd.DataFrame) -> pd.DataFrame:
     df["total_playcount"] = df["total_playcount"].astype("int64")
     return df
 
+
 def transform(
     csv_df: pd.DataFrame,
     hdf5_df: pd.DataFrame,
