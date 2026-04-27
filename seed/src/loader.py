@@ -11,323 +11,321 @@ from psycopg2.extensions import connection
 from .user import User
 
 
-def create_tables(conn: connection):
-    create_tracks_table(conn)
-    create_artists_table(conn)
-    create_tracks_artists_table(conn)
-    create_albums_table(conn)
-    create_tracks_albums_table(conn)
-    create_artists_albums_table(conn)
-    create_users_table(conn)
+class DatabaseLoader:
+    def __init__(self, conn: connection) -> None:
+        self.conn = conn
 
+    def create_tables(self):
+        self.create_tracks_table()
+        self.create_artists_table()
+        self.create_tracks_artists_table()
+        self.create_albums_table()
+        self.create_tracks_albums_table()
+        self.create_artists_albums_table()
+        self.create_users_table()
 
-def create_tracks_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS tracks (
-            track_id SERIAL PRIMARY KEY,
-            name VARCHAR(255),
-            total_playcount BIGINT DEFAULT 0,
-            spotify_id VARCHAR(255),
-            tags VARCHAR(255),
-            genre VARCHAR(255),
-            year INT,
-            duration_ms INT,
-            danceability FLOAT,
-            mode INT,
-            valence FLOAT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            old_track_id VARCHAR(50)
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'tracks'")
+    def create_tracks_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS tracks (
+                track_id SERIAL PRIMARY KEY,
+                name VARCHAR(255),
+                total_playcount BIGINT DEFAULT 0,
+                spotify_id VARCHAR(255),
+                tags VARCHAR(255),
+                genre VARCHAR(255),
+                year INT,
+                duration_ms INT,
+                danceability FLOAT,
+                mode INT,
+                valence FLOAT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                old_track_id VARCHAR(50)
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'tracks'")
 
+    def create_artists_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS artists (
+                artist_id SERIAL PRIMARY KEY,
+                artist_name VARCHAR(255) CONSTRAINT temp_constraint UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                old_artist_id VARCHAR(50)
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'artists'")
 
-def create_artists_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS artists (
-            artist_id SERIAL PRIMARY KEY,
-            artist_name VARCHAR(255) CONSTRAINT temp_constraint UNIQUE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            old_artist_id VARCHAR(50)
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'artists'")
+    def create_tracks_artists_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS tracks_artists (
+                track_id INTEGER,
+                artist_id INTEGER,
+                PRIMARY KEY (track_id, artist_id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (track_id) REFERENCES tracks(track_id),
+                FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'tracks_artists'")
 
+    def create_albums_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS albums (
+                album_id SERIAL PRIMARY KEY,
+                album_name VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                old_album_id VARCHAR(50) UNIQUE
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'albums'")
 
-def create_tracks_artists_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS tracks_artists (
-            track_id INTEGER,
-            artist_id INTEGER,
-            PRIMARY KEY (track_id, artist_id),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (track_id) REFERENCES tracks(track_id),
-            FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'tracks_artists'")
+    def create_tracks_albums_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS tracks_albums (
+                track_id INTEGER,
+                album_id INTEGER,
+                PRIMARY KEY (track_id, album_id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (track_id) REFERENCES tracks(track_id),
+                FOREIGN KEY (album_id) REFERENCES albums(album_id)
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'tracks_albums'")
 
+    def create_artists_albums_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS artists_albums (
+                artist_id INTEGER,
+                album_id INTEGER,
+                PRIMARY KEY (artist_id, album_id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
+                FOREIGN KEY (album_id) REFERENCES albums(album_id)
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'artists_albums'")
 
-def create_albums_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS albums (
-            album_id SERIAL PRIMARY KEY,
-            album_name VARCHAR(255),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            old_album_id VARCHAR(50) UNIQUE
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'albums'")
+    def create_users_table(self):
+        query = sql.SQL("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                permission_level INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        self.run_query(query)
+        print("Created table: 'users'")
 
+    def run_query(self, query: str | sql.SQL) -> None:
+        """Run a query with no value placeholders and no return value."""
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        self.conn.commit()
+        cursor.close()
 
-def create_tracks_albums_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS tracks_albums (
-            track_id INTEGER,
-            album_id INTEGER,
-            PRIMARY KEY (track_id, album_id),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (track_id) REFERENCES tracks(track_id),
-            FOREIGN KEY (album_id) REFERENCES albums(album_id)
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'tracks_albums'")
-
-
-def create_artists_albums_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS artists_albums (
-            artist_id INTEGER,
-            album_id INTEGER,
-            PRIMARY KEY (artist_id, album_id),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (artist_id) REFERENCES artists(artist_id),
-            FOREIGN KEY (album_id) REFERENCES albums(album_id)
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'artists_albums'")
-
-
-def create_users_table(conn: connection):
-    query = sql.SQL("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id SERIAL PRIMARY KEY,
-            username VARCHAR(255) UNIQUE NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            permission_level INTEGER NOT NULL DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-    run_query(conn, query)
-    print("Created table: 'users'")
-
-
-def run_query(conn: connection, query: str | sql.SQL) -> None:
-    """Run a query with no value placeholders and no return value."""
-    cursor = conn.cursor()
-    cursor.execute(query)
-    conn.commit()
-    cursor.close()
-
-
-def seed_database(conn: connection, data: pd.DataFrame):
-    """Seed the data into the PostgreSQL database."""
-    seed_artists(conn, data[["old_artist_id", "artist_name"]])
-    seed_albums(conn, data[["old_album_id", "album_name"]])
-    seed_tracks(
-        conn,
-        data[
-            [
-                "old_track_id",
-                "name",
-                "total_playcount",
-                "spotify_id",
-                "tags",
-                "genre",
-                "year",
-                "duration_ms",
-                "danceability",
-                "mode",
-                "valence",
-            ]
-        ],
-    )
-
-    # Seed relationships
-    seed_tracks_artists(conn, data[["old_track_id", "artist_name"]])
-    seed_tracks_albums(conn, data[["old_track_id", "old_album_id"]])
-    seed_artists_albums(conn, data[["artist_name", "old_album_id"]])
-
-    remove_artists_temp_constraint(conn)
-    drop_old_id_cols(conn)
-
-
-def seed_admin_user(conn: connection, admin: User):
-    cursor = conn.cursor()
-    query = """
-        INSERT INTO users (username, email, password_hash, permission_level)
-        VALUES (%s, %s, %s, %s)
-        ON CONFLICT (username) DO NOTHING;
-    """
-    admin_password_hash = bcrypt.hashpw(
-        admin.password.encode("utf-8"), bcrypt.gensalt()
-    ).decode("utf-8")
-    cursor.execute(query, (admin.username, admin.email, admin_password_hash, 1))
-    conn.commit()
-    cursor.close()
-    print("Seeded admin user.")
-
-
-def seed_artists(conn: connection, artists_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in artists_data.drop_duplicates(subset=["old_artist_id"]).iterrows():
-        query = """
-            INSERT INTO artists (artist_name, old_artist_id)
-            VALUES (%s, %s)
-            ON CONFLICT (artist_name) DO UPDATE SET old_artist_id = EXCLUDED.old_artist_id;
-        """
-        cursor.execute(query, (row["artist_name"], row["old_artist_id"]))
-    conn.commit()
-    cursor.close()
-    print(
-        f"Seeded {len(artists_data.drop_duplicates(subset=['old_artist_id']))} artists."
-    )
-
-
-def seed_albums(conn: connection, albums_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in albums_data.drop_duplicates(subset=["old_album_id"]).iterrows():
-        query = """
-            INSERT INTO albums (album_name, old_album_id)
-            VALUES (%s, %s)
-            ON CONFLICT (old_album_id) DO NOTHING;
-        """
-        cursor.execute(
-            query,
-            (
-                row["album_name"],
-                row["old_album_id"],
-            ),
+    def seed_database(self, data: pd.DataFrame):
+        """Seed the data into the PostgreSQL database."""
+        self.seed_artists(data[["old_artist_id", "artist_name"]])
+        self.seed_albums(data[["old_album_id", "album_name"]])
+        self.seed_tracks(
+            data[
+                [
+                    "old_track_id",
+                    "name",
+                    "total_playcount",
+                    "spotify_id",
+                    "tags",
+                    "genre",
+                    "year",
+                    "duration_ms",
+                    "danceability",
+                    "mode",
+                    "valence",
+                ]
+            ],
         )
-    conn.commit()
-    cursor.close()
-    print(f"Seeded {len(albums_data.drop_duplicates(subset=['old_album_id']))} albums.")
 
+        # Seed relationships
+        self.seed_tracks_artists(data[["old_track_id", "artist_name"]])
+        self.seed_tracks_albums(data[["old_track_id", "old_album_id"]])
+        self.seed_artists_albums(data[["artist_name", "old_album_id"]])
 
-def seed_tracks(conn: connection, tracks_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in tracks_data.iterrows():
+        # Drop temporary constraints and columns.
+        self.remove_artists_temp_constraint()
+        self.drop_old_id_cols()
+
+    def seed_admin_user(self, admin: User):
+        cursor = self.conn.cursor()
         query = """
-            INSERT INTO tracks (name, total_playcount, spotify_id, tags, genre,
-            year, duration_ms, danceability, mode, valence, old_track_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            INSERT INTO users (username, email, password_hash, permission_level)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (username) DO NOTHING;
         """
-        cursor.execute(
-            query,
-            (
-                row["name"],
-                int(row["total_playcount"]),
-                row["spotify_id"],
-                row["tags"],
-                row["genre"],
-                row["year"],
-                row["duration_ms"],
-                row["danceability"],
-                row["mode"],
-                row["valence"],
-                row["old_track_id"],
-            ),
+        admin_password_hash = bcrypt.hashpw(
+            admin.password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+        cursor.execute(query, (admin.username, admin.email, admin_password_hash, 1))
+        self.conn.commit()
+        cursor.close()
+        print("Seeded admin user.")
+
+    def seed_artists(self, artists_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in artists_data.drop_duplicates(subset=["old_artist_id"]).iterrows():
+            query = """
+                INSERT INTO artists (artist_name, old_artist_id)
+                VALUES (%s, %s)
+                ON CONFLICT (artist_name) DO UPDATE SET old_artist_id = EXCLUDED.old_artist_id;
+            """
+            cursor.execute(query, (row["artist_name"], row["old_artist_id"]))
+        self.conn.commit()
+        cursor.close()
+        print(
+            f"Seeded {len(artists_data.drop_duplicates(subset=['old_artist_id']))} artists."
         )
-    conn.commit()
-    cursor.close()
-    print(f"Seeded {len(tracks_data)} tracks.")
 
+    def seed_albums(self, albums_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in albums_data.drop_duplicates(subset=["old_album_id"]).iterrows():
+            query = """
+                INSERT INTO albums (album_name, old_album_id)
+                VALUES (%s, %s)
+                ON CONFLICT (old_album_id) DO NOTHING;
+            """
+            cursor.execute(
+                query,
+                (
+                    row["album_name"],
+                    row["old_album_id"],
+                ),
+            )
+        self.conn.commit()
+        cursor.close()
+        print(
+            f"Seeded {len(albums_data.drop_duplicates(subset=['old_album_id']))} albums."
+        )
 
-def seed_tracks_artists(conn: connection, tracks_artists_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in tracks_artists_data.iterrows():
-        track_id = get(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
-        artist_id = get(conn, "artist_id", "artists", "artist_name", row["artist_name"])
-        query = """
-            INSERT INTO tracks_artists (track_id, artist_id)
-            VALUES (%s, %s)
-            ON CONFLICT (track_id, artist_id) DO NOTHING;
-        """
-        cursor.execute(query, (track_id, artist_id))
-    conn.commit()
-    cursor.close()
-    print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
+    def seed_tracks(self, tracks_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in tracks_data.iterrows():
+            query = """
+                INSERT INTO tracks (name, total_playcount, spotify_id, tags, genre,
+                year, duration_ms, danceability, mode, valence, old_track_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """
+            cursor.execute(
+                query,
+                (
+                    row["name"],
+                    int(row["total_playcount"]),
+                    row["spotify_id"],
+                    row["tags"],
+                    row["genre"],
+                    row["year"],
+                    row["duration_ms"],
+                    row["danceability"],
+                    row["mode"],
+                    row["valence"],
+                    row["old_track_id"],
+                ),
+            )
+        self.conn.commit()
+        cursor.close()
+        print(f"Seeded {len(tracks_data)} tracks.")
 
+    def seed_tracks_artists(self, tracks_artists_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in tracks_artists_data.iterrows():
+            track_id = self.get(
+                "track_id", "tracks", "old_track_id", row["old_track_id"]
+            )
+            artist_id = self.get(
+                "artist_id", "artists", "artist_name", row["artist_name"]
+            )
+            query = """
+                INSERT INTO tracks_artists (track_id, artist_id)
+                VALUES (%s, %s)
+                ON CONFLICT (track_id, artist_id) DO NOTHING;
+            """
+            cursor.execute(query, (track_id, artist_id))
+        self.conn.commit()
+        cursor.close()
+        print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
 
-def seed_tracks_albums(conn: connection, tracks_albums_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in tracks_albums_data.iterrows():
-        track_id = get(conn, "track_id", "tracks", "old_track_id", row["old_track_id"])
-        album_id = get(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
-        query = """
-            INSERT INTO tracks_albums (track_id, album_id)
-            VALUES (%s, %s)
-            ON CONFLICT (track_id, album_id) DO NOTHING;
-        """
-        cursor.execute(query, (track_id, album_id))
-    conn.commit()
-    cursor.close()
-    print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
+    def seed_tracks_albums(self, tracks_albums_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in tracks_albums_data.iterrows():
+            track_id = self.get(
+                "track_id", "tracks", "old_track_id", row["old_track_id"]
+            )
+            album_id = self.get(
+                "album_id", "albums", "old_album_id", row["old_album_id"]
+            )
+            query = """
+                INSERT INTO tracks_albums (track_id, album_id)
+                VALUES (%s, %s)
+                ON CONFLICT (track_id, album_id) DO NOTHING;
+            """
+            cursor.execute(query, (track_id, album_id))
+        self.conn.commit()
+        cursor.close()
+        print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
 
+    def seed_artists_albums(self, artists_albums_data: pd.DataFrame):
+        cursor = self.conn.cursor()
+        for _, row in artists_albums_data.iterrows():
+            artist_id = self.get(
+                "artist_id", "artists", "artist_name", row["artist_name"]
+            )
+            album_id = self.get(
+                "album_id", "albums", "old_album_id", row["old_album_id"]
+            )
+            query = """
+                INSERT INTO artists_albums (artist_id, album_id)
+                VALUES (%s, %s)
+                ON CONFLICT (artist_id, album_id) DO NOTHING;
+            """
+            cursor.execute(query, (artist_id, album_id))
+        self.conn.commit()
+        cursor.close()
+        print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
 
-def seed_artists_albums(conn: connection, artists_albums_data: pd.DataFrame):
-    cursor = conn.cursor()
-    for _, row in artists_albums_data.iterrows():
-        artist_id = get(conn, "artist_id", "artists", "artist_name", row["artist_name"])
-        album_id = get(conn, "album_id", "albums", "old_album_id", row["old_album_id"])
-        query = """
-            INSERT INTO artists_albums (artist_id, album_id)
-            VALUES (%s, %s)
-            ON CONFLICT (artist_id, album_id) DO NOTHING;
-        """
-        cursor.execute(query, (artist_id, album_id))
-    conn.commit()
-    cursor.close()
-    print(f"Seeded {len(artists_albums_data)} artist-album relationships.")
+    def get(
+        self, fields: str, table_name: str, col_name: str, value: str
+    ) -> tuple[Any] | None:
+        """Fetch the new id by the old id.
+        :param fields: A list of columns.
+        :param table_name: The name of the table.
+        :param col_name: The column name in the condition.
+        :param value: The value in the condition.
+        :returns: A tuple with one fetched."""
+        cursor = self.conn.cursor()
+        query = sql.SQL("SELECT {select_list} FROM {table} WHERE {column} = %s").format(
+            select_list=sql.Identifier(fields),
+            table=sql.Identifier(table_name),
+            column=sql.Identifier(col_name),
+        )
+        cursor.execute(query, (value,))
+        self.conn.commit()
+        fetched = cursor.fetchone()
+        cursor.close()
+        return fetched
 
+    def remove_artists_temp_constraint(self) -> None:
+        self.run_query("""ALTER TABLE artists DROP CONSTRAINT temp_constraint""")
+        print("Dropped constraint unique artist_name.")
 
-def get(
-    conn: connection, fields: str, table_name: str, col_name: str, value: str
-) -> tuple[Any] | None:
-    """Fetch the new id by the old id.
-    :param conn: The database connection.
-    :param fields: A list of columns.
-    :param table_name: The name of the table.
-    :param col_name: The column name in the condition.
-    :param value: The value in the condition.
-    :returns: A tuple with one"""
-    cursor = conn.cursor()
-    query = sql.SQL("SELECT {select_list} FROM {table} WHERE {column} = %s").format(
-        select_list=sql.Identifier(fields),
-        table=sql.Identifier(table_name),
-        column=sql.Identifier(col_name),
-    )
-    cursor.execute(query, (value,))
-    conn.commit()
-    fetched = cursor.fetchone()
-    cursor.close()
-    return fetched
-
-
-def remove_artists_temp_constraint(conn: connection) -> None:
-    run_query(conn, """ALTER TABLE artists DROP CONSTRAINT temp_constraint""")
-    print("Removed constraint unique artist_name.")
-
-
-def drop_old_id_cols(conn: connection) -> None:
-    run_query(conn, """ALTER TABLE tracks DROP COLUMN old_track_id""")
-    run_query(conn, """ALTER TABLE artists DROP COLUMN old_artist_id""")
-    run_query(conn, """ALTER TABLE albums DROP COLUMN old_album_id""")
-    print("Dropped old id columns.")
+    def drop_old_id_cols(self) -> None:
+        self.run_query("""ALTER TABLE tracks DROP COLUMN old_track_id""")
+        self.run_query("""ALTER TABLE artists DROP COLUMN old_artist_id""")
+        self.run_query("""ALTER TABLE albums DROP COLUMN old_album_id""")
+        print("Dropped old id columns.")

@@ -8,7 +8,7 @@ import psycopg2
 from dotenv import load_dotenv
 
 from src.user import User
-from src.loader import create_tables, seed_admin_user, seed_database
+from src.loader import DatabaseLoader
 from src.extractor import read_csv_data, read_hdf5_data, read_playcount_data
 from src.transformer import transform, transform_playcount_data
 
@@ -55,15 +55,17 @@ def connect_to_db():
 
 def main():
     # Read data
-    csv_data = read_csv_data(CSV_PATH, CHUNK_SIZE)
-    hdf5_data = read_hdf5_data(HDF5_PATH)
-    playcount_data = read_playcount_data(CSV_LISTENING_HISTORY_PATH, CHUNK_SIZE)
+    csv_data = read_csv_data(str(CSV_PATH), CHUNK_SIZE)
+    hdf5_data = read_hdf5_data(str(HDF5_PATH))
+    playcount_data = read_playcount_data(str(CSV_LISTENING_HISTORY_PATH), CHUNK_SIZE)
 
     # Connect to database
     conn = connect_to_db()
 
-    create_tables(conn)
-    seed_admin_user(conn, User(admin_username, admin_email, admin_password))
+    loader = DatabaseLoader(conn)
+
+    loader.create_tables()
+    loader.seed_admin_user(User(admin_username, admin_email, admin_password))
 
     # Transform
     total_playcount = transform_playcount_data(playcount_data)
@@ -71,7 +73,7 @@ def main():
         combined_data = transform(chunk, hdf5_data, total_playcount)
 
         # Seed database
-        seed_database(conn, combined_data)
+        loader.seed_database(combined_data)
 
     conn.close()
     print("Disconnected")
