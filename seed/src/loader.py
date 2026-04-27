@@ -39,7 +39,8 @@ def create_tracks_table(conn: connection):
             old_track_id VARCHAR(50)
         );
     """)
-    create_table(conn, query, "tracks")
+    run_query(conn, query)
+    print("Created table: 'tracks'")
 
 
 def create_artists_table(conn: connection):
@@ -51,7 +52,8 @@ def create_artists_table(conn: connection):
             old_artist_id VARCHAR(50)
         );
     """)
-    create_table(conn, query, "artists")
+    run_query(conn, query)
+    print("Created table: 'artists'")
 
 
 def create_tracks_artists_table(conn: connection):
@@ -65,7 +67,8 @@ def create_tracks_artists_table(conn: connection):
             FOREIGN KEY (artist_id) REFERENCES artists(artist_id)
         );
     """)
-    create_table(conn, query, "tracks_artists")
+    run_query(conn, query)
+    print("Created table: 'tracks_artists'")
 
 
 def create_albums_table(conn: connection):
@@ -77,7 +80,8 @@ def create_albums_table(conn: connection):
             old_album_id VARCHAR(50) UNIQUE
         );
     """)
-    create_table(conn, query, "albums")
+    run_query(conn, query)
+    print("Created table: 'albums'")
 
 
 def create_tracks_albums_table(conn: connection):
@@ -91,7 +95,8 @@ def create_tracks_albums_table(conn: connection):
             FOREIGN KEY (album_id) REFERENCES albums(album_id)
         );
     """)
-    create_table(conn, query, "tracks_albums")
+    run_query(conn, query)
+    print("Created table: 'tracks_albums'")
 
 
 def create_artists_albums_table(conn: connection):
@@ -105,7 +110,8 @@ def create_artists_albums_table(conn: connection):
             FOREIGN KEY (album_id) REFERENCES albums(album_id)
         );
     """)
-    create_table(conn, query, "artists_albums")
+    run_query(conn, query)
+    print("Created table: 'artists_albums'")
 
 
 def create_users_table(conn: connection):
@@ -119,15 +125,16 @@ def create_users_table(conn: connection):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
-    create_table(conn, query, "albums")
+    run_query(conn, query)
+    print("Created table: 'users'")
 
 
-def create_table(conn: connection, query: sql.SQL, table_name: str):
+def run_query(conn: connection, query: str | sql.SQL) -> None:
+    """Run a query with no value placeholders and no return value."""
     cursor = conn.cursor()
     cursor.execute(query)
     conn.commit()
     cursor.close()
-    print(f"Created table: '{table_name}'")
 
 
 def seed_database(conn: connection, data: pd.DataFrame):
@@ -159,6 +166,7 @@ def seed_database(conn: connection, data: pd.DataFrame):
     seed_artists_albums(conn, data[["artist_name", "old_album_id"]])
 
     remove_artists_temp_constraint(conn)
+    drop_old_id_cols(conn)
 
 
 def seed_admin_user(conn: connection, admin: User):
@@ -314,9 +322,12 @@ def get(
 
 
 def remove_artists_temp_constraint(conn: connection) -> None:
-    cursor = conn.cursor()
-    query = """ALTER TABLE artists DROP CONSTRAINT temp_constraint"""
-    cursor.execute(query)
-    conn.commit()
-    cursor.close()
+    run_query(conn, """ALTER TABLE artists DROP CONSTRAINT temp_constraint""")
     print("Removed constraint unique artist_name.")
+
+
+def drop_old_id_cols(conn: connection) -> None:
+    run_query(conn, """ALTER TABLE tracks DROP COLUMN old_track_id""")
+    run_query(conn, """ALTER TABLE artists DROP COLUMN old_artist_id""")
+    run_query(conn, """ALTER TABLE albums DROP COLUMN old_album_id""")
+    print("Dropped old id columns.")
