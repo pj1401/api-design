@@ -49,9 +49,8 @@ class DatabaseLoader:
         query = sql.SQL("""
             CREATE TABLE IF NOT EXISTS artists (
                 artist_id SERIAL PRIMARY KEY,
-                artist_name VARCHAR(255) CONSTRAINT temp_constraint UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                old_artist_id VARCHAR(50)
+                artist_name VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
         self.run_query(query)
@@ -76,8 +75,7 @@ class DatabaseLoader:
             CREATE TABLE IF NOT EXISTS albums (
                 album_id SERIAL PRIMARY KEY,
                 album_name VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                old_album_id VARCHAR(50) UNIQUE
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
         self.run_query(query)
@@ -134,8 +132,8 @@ class DatabaseLoader:
 
     def seed_database(self, data: pd.DataFrame):
         """Seed the data into the PostgreSQL database."""
-        self.seed_artists(data[["old_artist_id", "artist_name"]])
-        self.seed_albums(data[["old_album_id", "album_name"]])
+        self.seed_artists(data[["artist_id", "artist_name"]])
+        self.seed_albums(data[["album_id", "album_name"]])
         self.seed_tracks(
             data[
                 [
@@ -155,12 +153,11 @@ class DatabaseLoader:
         )
 
         # Seed relationships
-        self.seed_tracks_artists(data[["old_track_id", "artist_name"]])
-        self.seed_tracks_albums(data[["old_track_id", "old_album_id"]])
-        self.seed_artists_albums(data[["artist_name", "old_album_id"]])
+        self.seed_tracks_artists(data[["old_track_id", "artist_id"]])
+        self.seed_tracks_albums(data[["old_track_id", "album_id"]])
+        self.seed_artists_albums(data[["artist_id", "album_id"]])
 
-        # Drop temporary constraints and columns.
-        self.remove_artists_temp_constraint()
+        # Drop temporary columns.
         self.drop_old_id_cols()
 
     def seed_admin_user(self, admin: User):
@@ -180,39 +177,37 @@ class DatabaseLoader:
 
     def seed_artists(self, artists_data: pd.DataFrame):
         cursor = self.conn.cursor()
-        for _, row in artists_data.drop_duplicates(subset=["old_artist_id"]).iterrows():
+        for _, row in artists_data.drop_duplicates(subset=["artist_id"]).iterrows():
             query = """
-                INSERT INTO artists (artist_name, old_artist_id)
+                INSERT INTO artists (artist_name, artist_id)
                 VALUES (%s, %s)
-                ON CONFLICT (artist_name) DO UPDATE SET old_artist_id = EXCLUDED.old_artist_id;
+                ON CONFLICT (artist_id) DO NOTHING;
             """
-            cursor.execute(query, (row["artist_name"], row["old_artist_id"]))
+            cursor.execute(query, (row["artist_name"], row["artist_id"]))
         self.conn.commit()
         cursor.close()
         print(
-            f"Seeded {len(artists_data.drop_duplicates(subset=['old_artist_id']))} artists."
+            f"Seeded {len(artists_data.drop_duplicates(subset=['artist_id']))} artists."
         )
 
     def seed_albums(self, albums_data: pd.DataFrame):
         cursor = self.conn.cursor()
-        for _, row in albums_data.drop_duplicates(subset=["old_album_id"]).iterrows():
+        for _, row in albums_data.drop_duplicates(subset=["album_id"]).iterrows():
             query = """
-                INSERT INTO albums (album_name, old_album_id)
+                INSERT INTO albums (album_name, album_id)
                 VALUES (%s, %s)
-                ON CONFLICT (old_album_id) DO NOTHING;
+                ON CONFLICT (album_id) DO NOTHING;
             """
             cursor.execute(
                 query,
                 (
                     row["album_name"],
-                    row["old_album_id"],
+                    row["album_id"],
                 ),
             )
         self.conn.commit()
         cursor.close()
-        print(
-            f"Seeded {len(albums_data.drop_duplicates(subset=['old_album_id']))} albums."
-        )
+        print(f"Seeded {len(albums_data.drop_duplicates(subset=['album_id']))} albums.")
 
     def seed_tracks(self, tracks_data: pd.DataFrame):
         cursor = self.conn.cursor()
@@ -248,15 +243,12 @@ class DatabaseLoader:
             track_id = self.get(
                 "track_id", "tracks", "old_track_id", row["old_track_id"]
             )
-            artist_id = self.get(
-                "artist_id", "artists", "artist_name", row["artist_name"]
-            )
             query = """
                 INSERT INTO tracks_artists (track_id, artist_id)
                 VALUES (%s, %s)
                 ON CONFLICT (track_id, artist_id) DO NOTHING;
             """
-            cursor.execute(query, (track_id, artist_id))
+            cursor.execute(query, (track_id, row["artist_id"]))
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(tracks_artists_data)} track-artist relationships.")
@@ -267,15 +259,12 @@ class DatabaseLoader:
             track_id = self.get(
                 "track_id", "tracks", "old_track_id", row["old_track_id"]
             )
-            album_id = self.get(
-                "album_id", "albums", "old_album_id", row["old_album_id"]
-            )
             query = """
                 INSERT INTO tracks_albums (track_id, album_id)
                 VALUES (%s, %s)
                 ON CONFLICT (track_id, album_id) DO NOTHING;
             """
-            cursor.execute(query, (track_id, album_id))
+            cursor.execute(query, (track_id, row["album_id"]))
         self.conn.commit()
         cursor.close()
         print(f"Seeded {len(tracks_albums_data)} track-album relationships.")
@@ -283,17 +272,13 @@ class DatabaseLoader:
     def seed_artists_albums(self, artists_albums_data: pd.DataFrame):
         cursor = self.conn.cursor()
         for _, row in artists_albums_data.iterrows():
-            artist_id = self.get(
-                "artist_id", "artists", "artist_name", row["artist_name"]
-            )
-            album_id = self.get(
-                "album_id", "albums", "old_album_id", row["old_album_id"]
-            )
             query = """
                 INSERT INTO artists_albums (artist_id, album_id)
                 VALUES (%s, %s)
                 ON CONFLICT (artist_id, album_id) DO NOTHING;
             """
+            artist_id = int(row["artist_id"])
+            album_id = int(row["album_id"])
             cursor.execute(query, (artist_id, album_id))
         self.conn.commit()
         cursor.close()
@@ -320,12 +305,6 @@ class DatabaseLoader:
         cursor.close()
         return fetched
 
-    def remove_artists_temp_constraint(self) -> None:
-        self.run_query("""ALTER TABLE artists DROP CONSTRAINT temp_constraint""")
-        print("Dropped constraint unique artist_name.")
-
     def drop_old_id_cols(self) -> None:
         self.run_query("""ALTER TABLE tracks DROP COLUMN old_track_id""")
-        self.run_query("""ALTER TABLE artists DROP COLUMN old_artist_id""")
-        self.run_query("""ALTER TABLE albums DROP COLUMN old_album_id""")
         print("Dropped old id columns.")
